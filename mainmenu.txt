@@ -1,0 +1,14 @@
+		NONAME GAME
+
+	This is the main menu.
+
+	1. Begin a new game.
+	2. Load a saved game.
+	3. Exit.
+$
+CALZONE
+CALZONE
+CALZONE
+CALZONE
+CALZONE
+$
