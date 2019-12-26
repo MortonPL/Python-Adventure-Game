@@ -1,0 +1,18 @@
+{
+    "List of Calls":
+    {
+        "MENU_MAIN":
+        {
+            "question": "\nWhat do you do? ",
+            "any_key": false,
+            "1": ["menu_new_game"],
+            "2": ["menu_load_game"],
+            "3": ["exit"]
+        },
+        "MENU_SCENARIO":
+        {
+            "question": "\n Choose the scenario you want to play. ",
+            "any_key": false
+        }
+    }
+}
