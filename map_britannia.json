@@ -1,0 +1,55 @@
+{
+    "Name": "NONAME - Chapter One",
+
+    "List of Calls":
+    {
+        "MENU_INTRO":
+        {
+            "question": "\nType in anything to proceed. ",
+            "any_key": true,
+            "any": ["menu_pick_character"]
+        },
+        "MENU_CHARACTER":
+        {
+            "question": "\nWrite the name of the character you choose. ",
+            "any_key": false,
+            "Benjamin": ["pick_character", "Benjamin"],
+            "Kathleen": ["pick_character", "Kathleen"],
+            "Jason": ["pick_character", "Jason"]
+        }
+    },
+
+    "Playable Characters":
+    {
+        "Benjamin":
+        {
+            "Menu Description": "Benjamin, the Hunter\nAll skills average.",
+            "FIT": 5,
+            "REF": 5,
+            "DET": 4,
+            "COM": 4,
+            "SOC": 4,
+            "LUC": 5
+        },
+        "Kathleen":
+        {
+            "Menu Description": "Kathleen, the Messanger\nGood Reflex and Social Skills, bad Combat Ability.",
+            "FIT": 4,
+            "REF": 6,
+            "DET": 4,
+            "COM": 2,
+            "SOC": 6,
+            "LUC": 5
+        },
+        "Jason":
+        {
+            "Menu Description": "Jason, the Veteran\nGood Combat Ability and Fitness, bad Luck and Social Skills.",
+            "FIT": 6,
+            "REF": 5,
+            "DET": 4,
+            "COM": 6,
+            "SOC": 3,
+            "LUC": 3
+        }
+    }
+}
