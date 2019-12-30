@@ -1,21 +1,24 @@
 {
+    "Version": "Game_A",
     "Name": "NONAME - Chapter One",
 
     "List of Calls":
     {
         "MENU_INTRO":
         {
-            "question": "\nType in anything to proceed. ",
-            "any_key": true,
+            "Text": "Europe was still recovering from the devastation brought by the Great War, when troubling rumours\nof unknown animals appearing on British Isles began to spread. Not so long after, the British found\nthemselves invaded by some kind of intelligent subterranean humanoid creatures. So-called Undermen\ncame through underground tunnels to wage war upon the surface. Even though the decimated Royal Army\ntried to halt the spread of Undermen through the country, it is certain that the current conventional\nmeans are not enough to repel the invaders. To turn the tide of the war, the brightest minds of the Crown\nhave been tasked with creating a super weapon. That is how the Earthquake Bomb was born - a powerful\nexplosive ordnance that would be detonated underground to destroy endless tunnels dug by the Undermen.\n\nYou, a daring soldier of the Crown, have volunteered to take the bomb schematics and safely bring them\nto the Royal Special Weapons Facility, where it will be constructed. You will have to\nmake your way through a war torn country filled with hostile creatures from another world.\n\nIf you succeed, you will be a hero.",
+            "Question": "\nType in anything to proceed. ",
+            "Any_key": true,
             "any": ["menu_pick_character"]
         },
         "MENU_CHARACTER":
         {
-            "question": "\nWrite the name of the character you choose. ",
-            "any_key": false,
-            "Benjamin": ["pick_character", "Benjamin"],
-            "Kathleen": ["pick_character", "Kathleen"],
-            "Jason": ["pick_character", "Jason"]
+            "Text": "Available characters:\n\n",
+            "Question": "\nWrite the name of the character you choose. ",
+            "Any_key": false,
+            "benjamin": ["pick_character", "Benjamin"],
+            "kathleen": ["pick_character", "Kathleen"],
+            "jason": ["pick_character", "Jason"]
         }
     },
 
@@ -50,6 +53,30 @@
             "COM": 6,
             "SOC": 3,
             "LUC": 3
+        }
+    },
+
+    "List of Locations":
+    {
+        "TESTA":
+        {
+            "Name": "Test Location A",
+            "New Description": "You find this place for the first time.",
+            "Description": "This is an example description",
+            "List of Paths": [["TESTB", 0]],
+            "List of Beings":[],
+            "Search Level": 3,
+            "List of Items": [],
+            "is_start": true
+        },
+        "TESTB":
+        {
+            "Name": "Test Location B",
+            "Description": "This is second example description",
+            "List of Paths": [["TESTA", 0]],
+            "List of Beings":[],
+            "Search Level": 3,
+            "List of Items": []
         }
     }
 }
