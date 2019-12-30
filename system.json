@@ -3,16 +3,17 @@
     {
         "MENU_MAIN":
         {
-            "question": "\nWhat do you do? ",
-            "any_key": false,
+            "Text": "\t\tNONAME GAME\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Question": "\nWhat do you do? ",
+            "Any_key": false,
             "1": ["menu_new_game"],
             "2": ["menu_load_game"],
             "3": ["exit"]
         },
         "MENU_SCENARIO":
         {
-            "question": "\n Choose the scenario you want to play. ",
-            "any_key": false
+            "Question": "\n Choose the scenario you want to play. ",
+            "Any_key": false
         }
     }
 }
