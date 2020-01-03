@@ -3,12 +3,15 @@
     {
         "MENU_MAIN":
         {
-            "Text": "\t\tNONAME GAME\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
             "Question": "\nWhat do you do? ",
             "Any_key": false,
             "1": ["menu_new_game"],
+            "Begin a new game": ["menu_new_game"],
             "2": ["menu_load_game"],
-            "3": ["exit"]
+            "Load a saved game": ["menu_load_game"],
+            "3": ["exit"],
+            "Exit": ["exit"]
         },
         "MENU_SCENARIO":
         {

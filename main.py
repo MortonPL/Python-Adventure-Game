@@ -4,12 +4,32 @@
 import os
 import sys
 import json
-import data
+# import data
+
+
+class GameData:
+    def __init__(self):
+        # This is the major data object
+        self.path = None
+        self.platform = None
+        self.list_of_screens = {}
+        self.current_screen = None
+        self.rollback = None
+        self.rollback_args = ()
+        self.list_of_system_calls = {}
+        self.list_of_calls = {}
+        self.list_of_locations = {}
+        self.list_of_menus = []
+        self.list_of_items = {}
+        self.playable_characters = {}
+        self.player = None
+        self.version = "Game_A"
 
 
 class Screen:
 
-    def __init__(self, key):
+    def __init__(self, data_object, key):
+        self.data = data_object
         self.key = key
         self.strlist = []
 
@@ -22,8 +42,9 @@ class Screen:
 
     def show(self):
         new_strlist = []
-        print(f"Current screen:"
-              f"{data.current_screen}\n".upper())
+        print(f"Current screen: "
+              f"{self.data.current_screen}".upper())
+        print("====================\n")
         for line in self.strlist:
             print(line[0])
             if not line[1]:
@@ -59,48 +80,49 @@ class ReaderJSON:
             self.json_file = json.load(file)
 
 
-class Game():
+class Game:
 
-    def __init__(self):
-        data.platform = sys.platform
-
-    def start(self):
-        data.list_of_menus[0].start()
+    def __init__(self, data_object):
+        self.data = data_object
+        self.data.platform = sys.platform
 
     def create_locations(self, json_section):
         for entry in json_section:
-            data.list_of_locations.append(
-                Location(self, json_section[entry], entry))
+            self.data.list_of_locations[entry] = json_section[entry]
+
+    def create_items(self, json_section):
+        for entry in json_section:
+            self.data.list_of_items[entry] = json_section[entry]
 
 # SCREEN METHODS:
 
     def screen_get(self, key):
-        return data.list_of_screens[key]
+        return self.data.list_of_screens[key]
 
     def screen_add(self, key, screen):
-        data.list_of_screens[key] = screen
+        self.data.list_of_screens[key] = screen
 
     def screen_change(self, key):
-        data.current_screen = key
+        self.data.current_screen = key
 
     def screen_refresh(self):
         self.screen_clear()
-        self.screen_get(data.current_screen).show()
+        self.screen_get(self.data.current_screen).show()
 
     def screen_reset(self, key):
         self.screen_get(key).clear_memory()
 
     def screen_clear(self):
-        if data.platform == "win32":
+        if self.data.platform == "win32":
             os.system("cls")
-        elif data.platform == "linux":
+        elif self.data.platform == "linux":
             os.system("clear")
 
-# COMMAND PROMPT (CP) METHODS:
+# COMMAND PROMPT (CP) methods:
 
-    def update_rollback(self, function, *args):
-        data.rollback = function
-        data.rollback_args = args
+    def cp_update_rollback(self, function, *args):
+        self.data.rollback = function
+        self.data.rollback_args = args
 
     def exit(self, *args):
         if input("\nAre you sure about that? (Type in QUIT to confirm.) ") == \
@@ -108,116 +130,191 @@ class Game():
             self.screen_clear()
             exit()
         else:
-            print("we're back")
             self.screen_refresh()
-            data.rollback(*data.rollback_args)
+            return self.data.rollback(*self.data.rollback_args)
 
-    def question(self, question=""):
-        return input(question)
-
-    def invalid_input(self):
-        self.screen_get(data.current_screen).add(
-            "\nPlease choose a valid option.", True, True)
+    def cp_invalid_input(self, call, string="\nPlease choose a valid option."):
+        self.screen_get(self.data.current_screen).add(string, True, True)
         self.screen_refresh()
+        return self.cp_call_user(call)
 
-# MENU FUNCTIONS CALLED BY THE CP
+    def cp_question(self, question=""):
+        return input(question).split(": ")
 
-    def menu_new_game(self, *args):
-        data.list_of_menus[1].start()
-
-    def menu_load_game(self, *args):
-        pass
-
-    def menu_new_scenario(self, scenario, *args):
-        data.mapfile = ReaderJSON(scenario)
-        data.list_of_calls =\
-            data.mapfile.json_file["List of Calls"]
-        data.playable_characters =\
-            data.mapfile.json_file["Playable Characters"]
-        self.create_locations(data.mapfile.json_file["List of Locations"])
-        data.list_of_menus[2].start()
-
-    def menu_pick_character(self, *args):
-        data.list_of_menus[3].start()
-
-    def pick_character(self, character, *args):
-        data.player = Player(data.playable_characters[character])
-        self.begin_adventure()
-
-    def begin_adventure(self):
-        for location in data.list_of_locations:
-            if "is_start" in location.ldata_variables:
-                data.player.go_to(location)
-
-
-class CommandPrompt():
-
-    def __init__(self, game):
-        self.game = game
-
-    def question(self, question=""):
-        return input(question).lower().split(": ")
-
-    def call_check(self, call):
+    def cp_call_check(self, call):
+        loaded_call = None
         try:
-            if call in data.list_of_system_calls:
-                loaded_call = data.list_of_system_calls[call]
-            elif call in data.list_of_calls:
-                loaded_call = data.list_of_calls[call]
+            if call in self.data.list_of_system_calls:
+                loaded_call = self.data.list_of_system_calls[call]
+            elif call in self.data.list_of_calls:
+                loaded_call = self.data.list_of_calls[call]
         except Exception:
             sys.exit(f"Something went wrong, call {call} does not exist.")
         return loaded_call
 
-    def call_user(self, call):
-        self.game.update_rollback(self.call_user, call)
+    def cp_call_user(self, call):
+        self.cp_update_rollback(self.cp_call_user, call)
 
-        loaded_call = self.call_check(call)
+        loaded_call = self.cp_call_check(call)
         try:
-            answer = self.question(loaded_call["Question"])
+            answer = self.cp_question(loaded_call["Question"])
         except Exception as ex:
             sys.exit(f"Something went wrong, entry {ex} in call {call} "
                      "does not exist.")
         valid_answer = False
         if answer == ["quit"]:
             valid_answer = True
-            self.game.exit()
+            return self.exit()
         elif loaded_call["Any_key"]:
             valid_answer = True
-            action = getattr(self.game, loaded_call["any"][0])
-            action()
+            action = getattr(self, loaded_call["any"][0])
+            return action, ()
         else:
             for each_option in loaded_call:
                 if answer[0] == each_option and answer[0] not in {"Question",
                                                                   "Any_key"}:
                     valid_answer = True
-                    action = getattr(self.game, loaded_call[answer[0]][0])
-                    action(*loaded_call[answer[0]][1:],
-                           *answer[1:])
-                    break
+                    action = getattr(self, loaded_call[answer[0]][0])
+                    # action(*loaded_call[answer[0]][1:],
+                    #        *answer[1:])
+                    action_attributes = (*loaded_call[answer[0]][1:],
+                                         *answer[1:])
+                    return action, action_attributes
         if not valid_answer:
-            self.game.invalid_input()
-            self.call_user(call)
+            return self.cp_invalid_input(call)
+
+# Starting the program
+
+    def start(self):
+        Menu(self.data, self, "MENU_MAIN")
+        return self.cp_call_user("MENU_MAIN")
+
+    def keep_going(self, func_tuple):
+        func, func_attribs = func_tuple
+        return func(*func_attribs)
+        # self.keep_going(func(*func_attribs))
+
+# Menu methods called by the CP
+
+    def menu_new_game(self, *args):
+        Menu(self.data, self, "MENU_SCENARIO")
+        return self.cp_call_user("MENU_SCENARIO")
+
+    def menu_load_game(self, *args):
+        # load a saved game
+        pass
+
+    def menu_new_scenario(self, scenario, *args):
+        self.data.mapfile = ReaderJSON(scenario)
+        self.data.list_of_calls =\
+            self.data.mapfile.json_file["List of Calls"]
+        self.data.playable_characters =\
+            self.data.mapfile.json_file["Playable Characters"]
+        self.create_locations(self.data.mapfile.json_file["List of Locations"])
+        self.create_items(self.data.mapfile.json_file["List of Items"])
+        Menu(self.data, self, "MENU_INTRO")
+        return self.cp_call_user("MENU_INTRO")
+
+    def menu_pick_character(self, *args):
+        Menu(self.data, self, "MENU_CHARACTER")
+        return self.cp_call_user("MENU_CHARACTER")
+
+    def pick_character(self, character, *args):
+        self.data.player = self.data.playable_characters[character]
+        return self.begin_adventure()
+
+    def begin_adventure(self):
+        self.screen_reset("menu")
+        for location_id, location in self.data.list_of_locations.items():
+            if "is_start" in location:
+                return self.appear((location_id, location))
+
+# Generic methods called by the CP
+
+    def search_location(self, *args):
+        # spend some time
+        if self.data.player["Location"][1]["Search Level"] < 3:
+            self.data.player["Location"][1]["Search Level"] += 1
+            self.screen_get(self.data.current_screen).add(
+                f"\nYou have searched. New search level:"
+                f"{self.data.player['Location'][1]['Search Level']}",
+                True)
+        else:
+            self.screen_get(self.data.current_screen).add(
+                f"\nYou have already searched the place and find nothing new.",
+                True)
+        self.screen_refresh()
+        return self.cp_call_user("GENERIC")
+
+    def go_to(self, *args):
+        found_it = False
+        for location_id, location in self.data.list_of_locations.items():
+            if location["Name"] == args[0]:
+                if location_id == self.data.player["Location"][0]:
+                    return self.cp_invalid_input(
+                        "GENERIC", "\nYou are already there.")
+                elif location_id not in self.data.list_of_locations:
+                    return self.cp_invalid_input(
+                        "GENERIC", "\nThis place does not exist.")
+                elif self.check_path((location_id, location)):
+                    self.data.player["Location"] = (location_id, location)
+                    return self.arrive((location_id, location))
+        if not found_it:
+            return self.cp_invalid_input(
+                "GENERIC", "\nThere is no such place.")
+
+# Functions called by go_to
+
+    def check_path(self, location_tuple):
+        location_id, location = location_tuple
+        for path in self.data.player["Location"][1]["List of Paths"]:
+            if path[0] == location_id and path[1] <= self.data.player[
+                    "Location"][1]["Search Level"]:
+                return True
+        return False
+
+    def appear(self, location_tuple):
+        self.data.player["Location"] = location_tuple
+        return self.arrive(location_tuple)
+
+    def arrive(self, location_tuple):
+        location_id, location = location_tuple
+        self.screen_change("location")
+        self.screen_reset("location")
+        if "is_new" not in location:
+            location["is_new"] = True
+        if location["is_new"]:
+            location["is_new"] = False
+            self.screen_get(self.data.current_screen).add(
+                location["New Description"])
+        elif not location["is_new"]:
+            self.screen_get(self.data.current_screen).add(
+                location["Description"])
+            # read description
+        self.screen_refresh()
+        # do shit
+        return self.cp_call_user("GENERIC")
 
 
-class Menu():
+class Menu:
 
-    def __init__(self, game, cp, call_key):
+    def __init__(self, data_object, game, call_key):
+        self.data = data_object
         self.game = game
-        self.cp = cp
         self.call_key = call_key
+        self.start()
 
     def start(self):
         self.game.screen_change("menu")
         self.game.screen_clear()
         self.read_menu()
-        self.cp.call_user(self.call_key)
 
     def read_menu(self):
         self.game.screen_reset("menu")
 
-        if "Text" in self.cp.call_check(self.call_key):
-            self.game.screen_get("menu").add(self.cp.call_check(self.call_key)[
-                "Text"])
+        if "Text" in self.game.cp_call_check(self.call_key):
+            self.game.screen_get("menu").add(self.game.cp_call_check(
+                self.call_key)["Text"])
         if self.call_key == "MENU_CHARACTER":
             self.write_characters()
         if self.call_key == "MENU_SCENARIO":
@@ -226,20 +323,20 @@ class Menu():
         self.game.screen_refresh()
 
     def write_characters(self):
-        for each in data.playable_characters:
-            self.game.screen_get("menu").add(data.playable_characters[each][
-                    "Menu Description"])
+        for each in self.data.playable_characters:
+            self.game.screen_get("menu").add(self.data.playable_characters[
+                each]["Menu Description"])
             self.game.screen_get("menu").add("")
 
     def read_directory(self):
         scenarios = []
         folder = list(filter(
             lambda x: x.endswith(".json") and x.startswith("map_"),
-            os.listdir(data.path)))
+            os.listdir(self.data.path)))
         for mapfile in folder:
             reader = ReaderJSON(mapfile)
             if "Version" in reader.json_file and reader.json_file["Version"]\
-                    == data.version:
+                    == self.data.version:
                 scenarios.append((mapfile, reader.json_file["Name"]))
         for index, entry in enumerate(scenarios):
             self.game.screen_get("menu").add(f"{index+1}. {entry[1]}")
@@ -247,59 +344,21 @@ class Menu():
 
     def add_scenarios_as_answers(self, scenarios):
         for index, entry in enumerate(scenarios):
-            data.list_of_system_calls["MENU_SCENARIO"][f"{index + 1}"] =\
+            self.data.list_of_system_calls["MENU_SCENARIO"][f"{index + 1}"] =\
                 ["menu_new_scenario", entry[0]]
 
 
-class Player(Game):
-
-    def __init__(self, player_data):
-        self.player_data = player_data
-
-    def go_to(self, location):
-        self.player_data["Location"] = location
-        location.arrive()
-
-
-class Location(Game):
-
-    def __init__(self, game, json_section, id):
-        self.game = game
-        self.id = id
-        self.ldata_variables = json_section
-
-    def arrive(self):
-        self.game.screen_change("location")
-        self.game.screen_reset("menu")
-        if "is_new" not in self.ldata_variables:
-            self.ldata_variables["is_new"] = True
-        if self.ldata_variables["is_new"]:
-            self.ldata_variables["is_new"] = False
-            self.game.screen_get(data.current_screen).add(
-                self.ldata_variables["New Description"])
-            # read new description
-        elif not self.ldata_variables["is_new"]:
-            self.game.screen_get(data.current_screen).add(
-                self.ldata_variables["Description"])
-            # read description
-        self.game.screen_refresh()
-        # do shit
-
-
 if __name__ == "__main__":
+    game_data = GameData()
     system = ReaderJSON("system.json")
 
-    data.path = sys.path[0]
-    data.list_of_system_calls = system.json_file["List of Calls"]
+    game_data.path = sys.path[0]
+    game_data.list_of_system_calls = system.json_file["List of Calls"]
 
-    game = Game()
-    command_prompt = CommandPrompt(game)
-    menu_main = Menu(game, command_prompt, "MENU_MAIN")
-    menu_scenario = Menu(game, command_prompt, "MENU_SCENARIO")
-    menu_intro = Menu(game, command_prompt, "MENU_INTRO")
-    menu_character = Menu(game, command_prompt, "MENU_CHARACTER")
-    data.list_of_menus = [menu_main, menu_scenario, menu_intro, menu_character]
-    data.list_of_screens = {"menu": Screen("menu"),
-                            "location": Screen("location")}
+    game = Game(game_data)
+    game_data.list_of_screens = {"menu": Screen(game_data, "menu"),
+                                 "location": Screen(game_data, "location")}
 
-    game.start()
+    function = game.start()
+    while True:
+        function = (game.keep_going(function))
