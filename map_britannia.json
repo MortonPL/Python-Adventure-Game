@@ -16,9 +16,9 @@
             "Text": "Available characters:\n\n",
             "Question": "\nWrite the name of the character you choose. ",
             "Any_key": false,
-            "Benjamin": ["pick_character", "Benjamin"],
-            "Kathleen": ["pick_character", "Kathleen"],
-            "Jason": ["pick_character", "Jason"]
+            "Benjamin": ["pick_character", "PBNJM"],
+            "Kathleen": ["pick_character", "PKATH"],
+            "Jason": ["pick_character", "PJASN"]
         },
         "GENERIC":
         {
@@ -32,9 +32,10 @@
 
     "Playable Characters":
     {
-        "Benjamin":
+        "PBNJM":
         {
-            "Menu Description": "Benjamin, the Hunter\nAll skills average.",
+            "Name": "Benjamin",
+            "Menu Description": "\tBenjamin, the Hunter\nAll skills average.\n",
             "FIT": 5,
             "REF": 5,
             "DET": 4,
@@ -42,9 +43,10 @@
             "SOC": 4,
             "LUC": 5
         },
-        "Kathleen":
+        "PKATH":
         {
-            "Menu Description": "Kathleen, the Messanger\nGood Reflex and Social Skills, bad Combat Ability.",
+            "Name": "Kathleen",
+            "Menu Description": "\tKathleen, the Messanger\nGood Reflex and Social Skills, bad Combat Ability.\n",
             "FIT": 4,
             "REF": 6,
             "DET": 4,
@@ -52,9 +54,10 @@
             "SOC": 6,
             "LUC": 5
         },
-        "Jason":
+        "PJASN":
         {
-            "Menu Description": "Jason, the Veteran\nGood Combat Ability and Fitness, bad Luck and Social Skills.",
+            "Name": "Jason",
+            "Menu Description": "\tJason, the Veteran\nGood Combat Ability and Fitness, bad Luck and Social Skills.\n",
             "FIT": 6,
             "REF": 5,
             "DET": 4,
@@ -74,7 +77,7 @@
             "List of Paths": [["TESTB", 0]],
             "List of Beings":[],
             "Search Level": 3,
-            "List of Items": [],
+            "List of Items": ["BANDG"],
             "is_start": true
         },
         "TESTB":
