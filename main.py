@@ -22,7 +22,14 @@ class GameData:
         self.list_of_menus = []
         self.list_of_items = {}
         self.playable_characters = {}
-        self.player = None
+        self.player = {
+            "Name": "Anonymus",
+            "Strength": 100,
+            "Stamina": 100,
+            "Skills": {"FIT": 0, "REF": 0, "DET": 0,
+                       "COM": 0, "SOC": 0, "LUC": 0},
+            "Location": None,
+            "Items": {}}
         self.version = "Game_A"
 
 
@@ -37,10 +44,10 @@ class Screen:
         if not exclusive or (string not in self.strlist and exclusive):
             self.strlist.append((string, temporary))
 
-    def clear_memory(self):
+    def screen_reset(self):
         self.strlist.clear()
 
-    def show(self):
+    def screen_show(self):
         new_strlist = []
         print(f"Current screen: "
               f"{self.data.current_screen}".upper())
@@ -51,27 +58,15 @@ class Screen:
                 new_strlist.append(line)
         self.strlist = new_strlist
 
+    def screen_clear(self):
+        if self.data.platform == "win32":
+            os.system("cls")
+        elif self.data.platform == "linux":
+            os.system("clear")
 
-class ReaderTXT:
-
-    def __init__(self, path):
-        self.sectlist = []
-        self.strlist = []
-        with open(os.path.join(sys.path[0], path), "r") as file:
-            counter = 0
-            for line in file:
-                line = line.strip('\n')
-                if line == "$":
-                    self.sectlist.append(self.strlist)
-                    self.strlist = []
-                else:
-                    self.strlist.append(line)
-                counter += 1
-
-    def get_section(self, wanted_section):
-        for index, section in enumerate(self.sectlist):
-            if index == wanted_section:
-                return section
+    def screen_refresh(self):
+        self.screen_clear()
+        self.screen_show()
 
 
 class ReaderJSON:
@@ -96,27 +91,14 @@ class Game:
 
 # SCREEN METHODS:
 
-    def screen_get(self, key):
+    def get_screen(self, key):
         return self.data.list_of_screens[key]
 
-    def screen_add(self, key, screen):
-        self.data.list_of_screens[key] = screen
-
-    def screen_change(self, key):
+    def change_screen(self, key):
         self.data.current_screen = key
 
-    def screen_refresh(self):
-        self.screen_clear()
-        self.screen_get(self.data.current_screen).show()
-
-    def screen_reset(self, key):
-        self.screen_get(key).clear_memory()
-
-    def screen_clear(self):
-        if self.data.platform == "win32":
-            os.system("cls")
-        elif self.data.platform == "linux":
-            os.system("clear")
+    def cscreen(self):
+        return self.data.list_of_screens[self.data.current_screen]
 
 # COMMAND PROMPT (CP) methods:
 
@@ -127,15 +109,15 @@ class Game:
     def exit(self, *args):
         if input("\nAre you sure about that? (Type in QUIT to confirm.) ") == \
                 "QUIT":
-            self.screen_clear()
+            self.cscreen().screen_clear()
             exit()
         else:
-            self.screen_refresh()
+            self.cscreen().screen_refresh()
             return self.data.rollback(*self.data.rollback_args)
 
     def cp_invalid_input(self, call, string="\nPlease choose a valid option."):
-        self.screen_get(self.data.current_screen).add(string, True, True)
-        self.screen_refresh()
+        self.cscreen().add(string, True, True)
+        self.cscreen().screen_refresh()
         return self.cp_call_user(call)
 
     def cp_question(self, question=""):
@@ -220,11 +202,13 @@ class Game:
         return self.cp_call_user("MENU_CHARACTER")
 
     def pick_character(self, character, *args):
-        self.data.player = self.data.playable_characters[character]
+        for entry in self.data.playable_characters[character]:
+            self.data.player[entry] = self.data.playable_characters[
+                character][entry]
         return self.begin_adventure()
 
     def begin_adventure(self):
-        self.screen_reset("menu")
+        self.cscreen().screen_reset()
         for location_id, location in self.data.list_of_locations.items():
             if "is_start" in location:
                 return self.appear((location_id, location))
@@ -235,15 +219,15 @@ class Game:
         # spend some time
         if self.data.player["Location"][1]["Search Level"] < 3:
             self.data.player["Location"][1]["Search Level"] += 1
-            self.screen_get(self.data.current_screen).add(
+            self.cscreen().add(
                 f"\nYou have searched. New search level:"
                 f"{self.data.player['Location'][1]['Search Level']}",
                 True)
         else:
-            self.screen_get(self.data.current_screen).add(
+            self.cscreen().add(
                 f"\nYou have already searched the place and find nothing new.",
                 True)
-        self.screen_refresh()
+        self.cscreen().screen_refresh()
         return self.cp_call_user("GENERIC")
 
     def go_to(self, *args):
@@ -279,21 +263,23 @@ class Game:
 
     def arrive(self, location_tuple):
         location_id, location = location_tuple
-        self.screen_change("location")
-        self.screen_reset("location")
+        self.change_screen("location")
+        self.cscreen().screen_reset()
         if "is_new" not in location:
             location["is_new"] = True
         if location["is_new"]:
             location["is_new"] = False
-            self.screen_get(self.data.current_screen).add(
-                location["New Description"])
+            self.cscreen().add(location["New Description"])
         elif not location["is_new"]:
-            self.screen_get(self.data.current_screen).add(
-                location["Description"])
+            self.cscreen().add(location["Description"])
             # read description
-        self.screen_refresh()
+        self.cscreen().screen_refresh()
         # do shit
         return self.cp_call_user("GENERIC")
+
+
+class Player:
+    pass
 
 
 class Menu:
@@ -305,28 +291,27 @@ class Menu:
         self.start()
 
     def start(self):
-        self.game.screen_change("menu")
-        self.game.screen_clear()
+        self.game.change_screen("menu")
+        self.game.cscreen().screen_clear()
         self.read_menu()
 
     def read_menu(self):
-        self.game.screen_reset("menu")
+        self.game.cscreen().screen_reset()
 
         if "Text" in self.game.cp_call_check(self.call_key):
-            self.game.screen_get("menu").add(self.game.cp_call_check(
+            self.game.get_screen("menu").add(self.game.cp_call_check(
                 self.call_key)["Text"])
         if self.call_key == "MENU_CHARACTER":
             self.write_characters()
         if self.call_key == "MENU_SCENARIO":
             self.add_scenarios_as_answers(self.read_directory())
 
-        self.game.screen_refresh()
+        self.game.cscreen().screen_refresh()
 
     def write_characters(self):
         for each in self.data.playable_characters:
-            self.game.screen_get("menu").add(self.data.playable_characters[
+            self.game.get_screen("menu").add(self.data.playable_characters[
                 each]["Menu Description"])
-            self.game.screen_get("menu").add("")
 
     def read_directory(self):
         scenarios = []
@@ -339,7 +324,7 @@ class Menu:
                     == self.data.version:
                 scenarios.append((mapfile, reader.json_file["Name"]))
         for index, entry in enumerate(scenarios):
-            self.game.screen_get("menu").add(f"{index+1}. {entry[1]}")
+            self.game.get_screen("menu").add(f"{index+1}. {entry[1]}")
         return scenarios
 
     def add_scenarios_as_answers(self, scenarios):
