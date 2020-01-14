@@ -26,7 +26,8 @@
             "Question": "\nWhat do you want to do? ",
             "Any_key": false,
             "Search": ["search_location"],
-            "Go to": ["go_to"]
+            "Go to": ["go_to"],
+            "Take": ["take_item"]
         }
     },
 
