@@ -13,7 +13,7 @@ system = {
         {
             "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. "
             "Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
-            "Question": "\nWhat do you do? ",
+            "Question": "What do you do? ",
             "Any_key": False,
             "1": ["menu_new_game"],
             "Begin a new game": ["menu_new_game"],
@@ -24,7 +24,7 @@ system = {
         },
         "MENU_SCENARIO":
         {
-            "Question": "\n Choose the scenario you want to play. ",
+            "Question": "Choose the scenario you want to play. ",
             "Any_key": False
         }
     }
@@ -37,7 +37,6 @@ class GameData:
         self.path = None
         self.platform = None
         self.list_of_screens = {}
-        self.current_screen = None
         self.rollback = None
         self.rollback_args = ()
         self.list_of_system_calls = {}
@@ -52,49 +51,52 @@ class GameData:
             "Stamina": 100,
             "Skills": {"FIT": 0, "REF": 0, "DET": 0,
                        "COM": 0, "SOC": 0, "LUC": 0},
-            "Location": None,
+            "Location": "",
             "Items": {}}
         self.version = "Game_A"
 
 
 class Screen:
 
-    def __init__(self, data_object, key):
+    def __init__(self, data_object):
         self.data = data_object
-        self.key = key
+        self.active = False
         self.strlist = []
 
-    def screen_add(self, string, temporary=False, exclusive=False):
+    def screen_add(self, string, temporary=False,
+                   exclusive=False, quick=False):
         if not exclusive or (string not in self.strlist and exclusive):
             self.strlist.append((string, temporary))
+        if quick:
+            pass
 
-    def quick_screen_add(self, string, temporary=False, exclusive=False):
-        self.screen_add(string, temporary, exclusive)
-        self.screen_show
+    def screen_get_index(self, string):
+        for index, line in enumerate(self.strlist):
+            if line == string:
+                return index
+
+    def screen_replace(self, string, index):
+        self.strlist[index] = string
 
     def screen_reset(self):
         self.strlist.clear()
 
     def screen_show(self):
-        new_strlist = []
-        print(f"Current screen: "
-              f"{self.data.current_screen}".upper())
-        print("====================\n")
-        for line in self.strlist:
-            print(line[0])
-            if not line[1]:
-                new_strlist.append(line)
-        self.strlist = new_strlist
+        if self.active:
+            new_strlist = []
+            print(f"\n||========================================"
+                  "========================================||\n")
+            for line in self.strlist:
+                print(line[0])
+                if not line[1]:
+                    new_strlist.append(line)
+            self.strlist = new_strlist
 
     def screen_clear(self):
         if self.data.platform == "win32":
             os.system("cls")
         elif self.data.platform == "linux":
             os.system("clear")
-
-    def screen_refresh(self):
-        self.screen_clear()
-        self.screen_show()
 
 
 class ReaderJSON:
@@ -124,11 +126,16 @@ class Game:
     def get_screen(self, key):
         return self.data.list_of_screens[key]
 
-    def change_screen(self, key):
-        self.data.current_screen = key
+    def refresh_screens(self):
+        self.get_screen("command").screen_clear()
+        for screen in self.data.list_of_screens:
+            self.get_screen(screen).screen_show()
 
-    def cscreen(self):
-        return self.data.list_of_screens[self.data.current_screen]
+    def activate_screen(self, key):
+        self.get_screen(key).active = True
+
+    def deactivate_screen(self, key):
+        self.get_screen(key).active = False
 
 # COMMAND PROMPT (CP) methods:
 
@@ -139,15 +146,15 @@ class Game:
     def exit(self, *args):
         if input("\nAre you sure about that? (Type in QUIT to confirm.) ") == \
                 "QUIT":
-            self.cscreen().screen_clear()
+            self.get_screen("command").screen_clear()
             exit()
         else:
-            self.cscreen().screen_refresh()
+            self.refresh_screens()
             return self.data.rollback(*self.data.rollback_args)
 
-    def cp_invalid_input(self, call, string="\nPlease choose a valid option."):
-        self.cscreen().screen_add(string, True, True)
-        self.cscreen().screen_refresh()
+    def cp_invalid_input(self, call, string="Please choose a valid option.\n"):
+        self.get_screen("command").screen_add(string, True, True)
+        self.refresh_screens()
         return self.cp_call_user(call)
 
     def cp_question(self, question=""):
@@ -196,6 +203,7 @@ class Game:
 # Starting the program
 
     def start(self):
+        self.activate_screen("command")
         Menu(self.data, self, "MENU_MAIN")
         return self.cp_call_user("MENU_MAIN")
 
@@ -235,26 +243,28 @@ class Game:
         return self.begin_adventure()
 
     def begin_adventure(self):
-        self.cscreen().screen_reset()
+        self.get_screen("menu").screen_reset()
+        self.activate_screen("location")
+        self.deactivate_screen("menu")
         for location_id, location in self.data.list_of_locations.items():
             if "is_start" in location:
-                return self.appear((location_id, location))
+                return self.appear(location_id, "LD_START")
 
 # Generic methods called by the CP
 
     def search_location(self, *args):
         # spend some time
-        if self.data.player["Location"][1]["Search Level"] < 3:
-            self.data.player["Location"][1]["Search Level"] += 1
-            self.cscreen().screen_add(
-                f"\nYou have searched. New search level:"
-                f"{self.data.player['Location'][1]['Search Level']}",
+        if self.clocation()[1]["Search Level"] < 3:
+            self.clocation()[1]["Search Level"] += 1
+            self.get_screen("command").screen_add(
+                f"You have searched. New search level:"
+                f"{self.data.player['Location'][1]['Search Level']}\n",
                 True)
         else:
-            self.cscreen().screen_add(
-                f"\nYou have already searched the place and find nothing new.",
+            self.get_screen("command").screen_add(
+                f"You have already searched the place and find nothing new.\n",
                 True)
-        self.cscreen().screen_refresh()
+        self.refresh_screens()
         return self.cp_call_user("GENERIC")
 
     def go_to(self, *args):
@@ -263,75 +273,142 @@ class Game:
             if location["Name"] == args[0]:
                 if location_id == self.clocation()[0]:
                     return self.cp_invalid_input(
-                        "GENERIC", "\nYou are already there.")
-                elif location_id not in self.data.list_of_locations:
+                        "GENERIC", "You are already there.\n")
+                elif not self.check_path(location_id):
                     return self.cp_invalid_input(
-                        "GENERIC", "\nThis place does not exist.")
-                elif self.check_path((location_id, location)):
-                    self.data.player["Location"] = (location_id, location)
-                    return self.arrive((location_id, location))
+                        "GENERIC", "You cannot go there from here.\n")
+                else:
+                    previous_location_id = self.clocation()[0]
+                    self.data.player["Location"] = location_id
+                    return self.arrive(location_id, previous_location_id)
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "\nThere is no such place.")
+                "GENERIC", "This place does not exist.\n")
 
     def take_item(self, *args):
         found_it = False
-        for item_id, item in self.data.list_of_items.items():
-            if item["Name"] == args[0]:
-                if item_id not in self.clocation()[1]["List of Items"]:
-                    return self.cp_invalid_input(
-                        "GENERIC", "\nThis item does not exist.")
-                else:
-                    return self.take_it(item_id, args[0])
+        if args[0] == "All":
+            if self.clocation()[1]["List of Items"] == []:
+                self.get_screen("command").screen_add(
+                    "There is nothing to take.\n", True, True)
+                return self.cp_call_user("GENERIC")
+            found_it = True
+            for item_id in self.clocation()[1]["List of Items"]:
+                self.take_it(item_id)
+            self.clocation()[1]["List of Items"] = []
+            self.get_screen("command").screen_add(
+                "You took every item you found.\n", True, True)
+            self.update_location_screen()
+        else:
+            for item_id, item in self.data.list_of_items.items():
+                if item["Name"] == args[0]:
+                    if item_id not in self.clocation()[1]["List of Items"]:
+                        return self.cp_invalid_input(
+                            "GENERIC", "There is nothing like that here.\n")
+                    else:
+                        found_it = True
+                        self.take_it(item_id)
+                        self.data.list_of_locations[self.clocation()[0]][
+                            "List of Items"].remove(item_id)
+                        self.get_screen("command").screen_add(
+                            f"You took {self.get_item(item_id)['Name']}.\n",
+                            True, True)
+                        self.update_location_screen()
+                        break
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "\nThere is no such item.")
+                "GENERIC", "There is no such item.\n")
+        return self.cp_call_user("GENERIC")
 
-# Functions called by go_to:
+    def open_inv(self):
+        self.get_screen("command").screen_add(
+            self.show_backpack(), True, True)
+        self.refresh_screens()
+        return self.cp_call_user("GENERIC")
+
+# Functions for locations:
 
     def clocation(self):
         return (self.data.player["Location"],
                 self.data.list_of_locations[self.data.player["Location"]])
 
-    def check_path(self, location_tuple):
-        location_id, location = location_tuple
+    def check_path(self, location_id):
         for path in self.clocation()[1]["List of Paths"]:
             if path[0] == location_id and path[1] <= self.clocation()[
                     1]["Search Level"]:
                 return True
         return False
 
-    def appear(self, location_tuple):
-        self.data.player["Location"] = location_tuple[0]
-        return self.arrive(self.clocation())
+    def appear(self, location_id, previous_location_id):
+        self.data.player["Location"] = location_id
+        return self.arrive(location_id, previous_location_id)
 
-    def arrive(self, location_tuple):
-        location_id, location = location_tuple
-        self.change_screen("location")
-        self.cscreen().screen_reset()
+    def arrive(self, location_id, previous_location_id):
+        location = self.data.list_of_locations[location_id]
+        previous_location = self.data.list_of_locations[previous_location_id]
+        self.get_screen("location").screen_reset()
+
         if "is_new" not in location:
             location["is_new"] = True
-        if location["is_new"]:
-            location["is_new"] = False
-            self.cscreen().screen_add(location["New Description"])
-        elif not location["is_new"]:
-            self.cscreen().screen_add(location["Description"])
-            # read description
-        self.cscreen().screen_refresh()
+        self.update_location_screen()
+        if previous_location["is_new"]:
+            previous_location["is_new"] = False
         # do shit
         return self.cp_call_user("GENERIC")
 
-# Functions called by take:
+    def update_location_screen(self):
+        self.get_screen("location").screen_reset()
+        location = self.clocation()[1]
+        if location["is_new"]:
+            self.get_screen("location").screen_add(location["New Description"])
+        else:
+            self.get_screen("location").screen_add(location["Description"])
+        self.get_screen("location").screen_add(
+            self.show_items())
+        self.refresh_screens()
 
-    def take_it(self, item_id, item_name):
-        self.data.list_of_locations[self.clocation()[0]][
-            "List of Items"].remove(item_id)
+    def show_items(self):
+        item_str = ""
+        if len(self.clocation()[1]["List of Items"]) == 0:
+            item_str = "There is nothing of value."
+        elif len(self.clocation()[1]["List of Items"]) == 1:
+            item = self.get_item(self.clocation()[1]['List of Items'][0])
+            item_str = f"There is {item['Article']} {item['Name']}."
+        else:
+            i = 0
+            item_str = "There are "
+            for item in self.clocation()[1]["List of Items"]:
+                i += 1
+                if not i == len(self.clocation()[1]["List of Items"]):
+                    end = ", "
+                else:
+                    end = ". "
+                item_str = "".join(
+                    [item_str, f"{self.get_item(item)['Name']}{end}"])
+        return item_str
+
+    def show_backpack(self):
+        item_str = "You have "
+        i = 0
+        for item, amount in self.data.player["Items"].items():
+            i += 1
+            if not i == len(self.data.player["Items"]):
+                end = ", "
+            else:
+                end = ". \n"
+            item_str = "".join([
+                item_str, f"{self.get_item(item)['Name']} ({amount}){end}"])
+        return item_str
+
+# Functions for items:
+
+    def get_item(self, item_id):
+        return self.data.list_of_items[item_id]
+
+    def take_it(self, item_id):
         if item_id not in self.data.player["Items"]:
             self.data.player["Items"][item_id] = 0
         self.data.player["Items"][item_id] += 1
-        self.cscreen().screen_add(f"\nYou picked up {item_name}", True, True)
-        self.cscreen().screen_refresh()
-        return self.cp_call_user("GENERIC")
 
 
 class Player:
@@ -347,12 +424,12 @@ class Menu:
         self.start()
 
     def start(self):
-        self.game.change_screen("menu")
-        self.game.cscreen().screen_clear()
+        self.game.activate_screen("menu")
+        self.game.get_screen("menu").screen_clear()
         self.read_menu()
 
     def read_menu(self):
-        self.game.cscreen().screen_reset()
+        self.game.get_screen("menu").screen_reset()
 
         if "Text" in self.game.cp_call_check(self.call_key):
             self.game.get_screen("menu").screen_add(self.game.cp_call_check(
@@ -362,7 +439,7 @@ class Menu:
         if self.call_key == "MENU_SCENARIO":
             self.add_scenarios_as_answers(self.read_directory())
 
-        self.game.cscreen().screen_refresh()
+        self.game.refresh_screens()
 
     def write_characters(self):
         for each in self.data.playable_characters:
@@ -396,8 +473,10 @@ if __name__ == "__main__":
     game_data.path = sys.path[0]
 
     game = Game(game_data)
-    game_data.list_of_screens = {"menu": Screen(game_data, "menu"),
-                                 "location": Screen(game_data, "location")}
+    game_data.list_of_screens = {"menu": Screen(game_data),
+                                 "location": Screen(game_data),
+                                 "command": Screen(game_data),
+                                 }
 
     function = game.start()
     while True:
