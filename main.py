@@ -4,7 +4,31 @@
 import os
 import sys
 import json
-# import data
+
+
+system = {
+    "List of Calls":
+    {
+        "MENU_MAIN":
+        {
+            "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. "
+            "Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Question": "\nWhat do you do? ",
+            "Any_key": False,
+            "1": ["menu_new_game"],
+            "Begin a new game": ["menu_new_game"],
+            "2": ["menu_load_game"],
+            "Load a saved game": ["menu_load_game"],
+            "3": ["exit"],
+            "Exit": ["exit"]
+        },
+        "MENU_SCENARIO":
+        {
+            "Question": "\n Choose the scenario you want to play. ",
+            "Any_key": False
+        }
+    }
+}
 
 
 class GameData:
@@ -40,9 +64,13 @@ class Screen:
         self.key = key
         self.strlist = []
 
-    def add(self, string, temporary=False, exclusive=False):
+    def screen_add(self, string, temporary=False, exclusive=False):
         if not exclusive or (string not in self.strlist and exclusive):
             self.strlist.append((string, temporary))
+
+    def quick_screen_add(self, string, temporary=False, exclusive=False):
+        self.screen_add(string, temporary, exclusive)
+        self.screen_show
 
     def screen_reset(self):
         self.strlist.clear()
@@ -81,6 +109,8 @@ class Game:
         self.data = data_object
         self.data.platform = sys.platform
 
+# Parsing functions:
+
     def create_locations(self, json_section):
         for entry in json_section:
             self.data.list_of_locations[entry] = json_section[entry]
@@ -89,7 +119,7 @@ class Game:
         for entry in json_section:
             self.data.list_of_items[entry] = json_section[entry]
 
-# SCREEN METHODS:
+# Screen functions:
 
     def get_screen(self, key):
         return self.data.list_of_screens[key]
@@ -116,7 +146,7 @@ class Game:
             return self.data.rollback(*self.data.rollback_args)
 
     def cp_invalid_input(self, call, string="\nPlease choose a valid option."):
-        self.cscreen().add(string, True, True)
+        self.cscreen().screen_add(string, True, True)
         self.cscreen().screen_refresh()
         return self.cp_call_user(call)
 
@@ -157,8 +187,6 @@ class Game:
                                                                   "Any_key"}:
                     valid_answer = True
                     action = getattr(self, loaded_call[answer[0]][0])
-                    # action(*loaded_call[answer[0]][1:],
-                    #        *answer[1:])
                     action_attributes = (*loaded_call[answer[0]][1:],
                                          *answer[1:])
                     return action, action_attributes
@@ -174,7 +202,6 @@ class Game:
     def keep_going(self, func_tuple):
         func, func_attribs = func_tuple
         return func(*func_attribs)
-        # self.keep_going(func(*func_attribs))
 
 # Menu methods called by the CP
 
@@ -219,12 +246,12 @@ class Game:
         # spend some time
         if self.data.player["Location"][1]["Search Level"] < 3:
             self.data.player["Location"][1]["Search Level"] += 1
-            self.cscreen().add(
+            self.cscreen().screen_add(
                 f"\nYou have searched. New search level:"
                 f"{self.data.player['Location'][1]['Search Level']}",
                 True)
         else:
-            self.cscreen().add(
+            self.cscreen().screen_add(
                 f"\nYou have already searched the place and find nothing new.",
                 True)
         self.cscreen().screen_refresh()
@@ -234,7 +261,7 @@ class Game:
         found_it = False
         for location_id, location in self.data.list_of_locations.items():
             if location["Name"] == args[0]:
-                if location_id == self.data.player["Location"][0]:
+                if location_id == self.clocation()[0]:
                     return self.cp_invalid_input(
                         "GENERIC", "\nYou are already there.")
                 elif location_id not in self.data.list_of_locations:
@@ -247,19 +274,36 @@ class Game:
             return self.cp_invalid_input(
                 "GENERIC", "\nThere is no such place.")
 
-# Functions called by go_to
+    def take_item(self, *args):
+        found_it = False
+        for item_id, item in self.data.list_of_items.items():
+            if item["Name"] == args[0]:
+                if item_id not in self.clocation()[1]["List of Items"]:
+                    return self.cp_invalid_input(
+                        "GENERIC", "\nThis item does not exist.")
+                else:
+                    return self.take_it(item_id, args[0])
+        if not found_it:
+            return self.cp_invalid_input(
+                "GENERIC", "\nThere is no such item.")
+
+# Functions called by go_to:
+
+    def clocation(self):
+        return (self.data.player["Location"],
+                self.data.list_of_locations[self.data.player["Location"]])
 
     def check_path(self, location_tuple):
         location_id, location = location_tuple
-        for path in self.data.player["Location"][1]["List of Paths"]:
-            if path[0] == location_id and path[1] <= self.data.player[
-                    "Location"][1]["Search Level"]:
+        for path in self.clocation()[1]["List of Paths"]:
+            if path[0] == location_id and path[1] <= self.clocation()[
+                    1]["Search Level"]:
                 return True
         return False
 
     def appear(self, location_tuple):
-        self.data.player["Location"] = location_tuple
-        return self.arrive(location_tuple)
+        self.data.player["Location"] = location_tuple[0]
+        return self.arrive(self.clocation())
 
     def arrive(self, location_tuple):
         location_id, location = location_tuple
@@ -269,12 +313,24 @@ class Game:
             location["is_new"] = True
         if location["is_new"]:
             location["is_new"] = False
-            self.cscreen().add(location["New Description"])
+            self.cscreen().screen_add(location["New Description"])
         elif not location["is_new"]:
-            self.cscreen().add(location["Description"])
+            self.cscreen().screen_add(location["Description"])
             # read description
         self.cscreen().screen_refresh()
         # do shit
+        return self.cp_call_user("GENERIC")
+
+# Functions called by take:
+
+    def take_it(self, item_id, item_name):
+        self.data.list_of_locations[self.clocation()[0]][
+            "List of Items"].remove(item_id)
+        if item_id not in self.data.player["Items"]:
+            self.data.player["Items"][item_id] = 0
+        self.data.player["Items"][item_id] += 1
+        self.cscreen().screen_add(f"\nYou picked up {item_name}", True, True)
+        self.cscreen().screen_refresh()
         return self.cp_call_user("GENERIC")
 
 
@@ -299,7 +355,7 @@ class Menu:
         self.game.cscreen().screen_reset()
 
         if "Text" in self.game.cp_call_check(self.call_key):
-            self.game.get_screen("menu").add(self.game.cp_call_check(
+            self.game.get_screen("menu").screen_add(self.game.cp_call_check(
                 self.call_key)["Text"])
         if self.call_key == "MENU_CHARACTER":
             self.write_characters()
@@ -310,8 +366,8 @@ class Menu:
 
     def write_characters(self):
         for each in self.data.playable_characters:
-            self.game.get_screen("menu").add(self.data.playable_characters[
-                each]["Menu Description"])
+            self.game.get_screen("menu").screen_add(
+                self.data.playable_characters[each]["Menu Description"])
 
     def read_directory(self):
         scenarios = []
@@ -324,7 +380,7 @@ class Menu:
                     == self.data.version:
                 scenarios.append((mapfile, reader.json_file["Name"]))
         for index, entry in enumerate(scenarios):
-            self.game.get_screen("menu").add(f"{index+1}. {entry[1]}")
+            self.game.get_screen("menu").screen_add(f"{index+1}. {entry[1]}")
         return scenarios
 
     def add_scenarios_as_answers(self, scenarios):
@@ -335,10 +391,9 @@ class Menu:
 
 if __name__ == "__main__":
     game_data = GameData()
-    system = ReaderJSON("system.json")
+    game_data.list_of_system_calls = system["List of Calls"]
 
     game_data.path = sys.path[0]
-    game_data.list_of_system_calls = system.json_file["List of Calls"]
 
     game = Game(game_data)
     game_data.list_of_screens = {"menu": Screen(game_data, "menu"),
