@@ -78,7 +78,7 @@
         "L_TESTB":
         {
             "Name": "Test Location B",
-            "New Description": "You find this place for the first time. But it's B",
+            "New Description": "You find this place for the first time. But it's B.",
             "Description": "This is second example description.",
             "List of Paths": [["L_TESTA", 0]],
             "List of Beings":[],
