@@ -31,7 +31,7 @@
             "Drop": ["drop_item"],
             "Use": ["use_item"],
             "Examine": ["examine"],
-            "Backpack": ["open_inv"]
+            "Choose": ["do_quest"]
         }
     },
 
@@ -90,11 +90,16 @@
             "Name": "Test A",
             "New Description": "You are in test location A for the first time.",
             "Description": "You are in test location A.",
+            "Quest Description": "An old man asks you to help him with his injuries. What do you do?",
             "List of Paths": ["L_TESTB"],
-            "List of Beings": [],
             "Search Level": 0,
             "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": ["LD_START"]},
             "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS"],
+            "List of Quests": [
+                {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
+                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Fitness >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
+            ],
             "is_start": true
         },
         "L_TESTB":
@@ -102,22 +107,15 @@
             "Name": "Test B",
             "New Description": "You are in test location B for the first time..",
             "Description": "You are in test location B.",
-            "List of Paths": ["L_TESTC"],
+            "List of Paths": ["L_TESTA"],
             "List of Beings": [],
             "Search Level": 0,
-            "Search Rewards": {},
+            "Search Rewards": {"1": 1},
             "List of Items": []
         },
         "L_TESTC":
         {
-            "Name": "Test C",
-            "New Description": "You are in test location C for the first time.",
-            "Description": "You are in test location C.",
-            "List of Paths": ["L_TESTA"],
-            "List of Beings": [],
-            "Search Level": 0,
-            "Search Rewards": {"1": ["BANDG"]},
-            "List of Items": []
+            "Name": "Test C"
         }
     },
     "List of Items":
@@ -143,6 +141,7 @@
             "Action": ["StatUp", "LUC", 1]
         }
     },
+
     "Text Variants":
     {
         "Search_1":
