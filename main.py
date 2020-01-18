@@ -169,6 +169,16 @@ class Game:
             self.show_items())
         self.get_screen("location").screen_add(
             self.show_paths())
+        if "List of Quests" in location.keys():
+            try:
+                self.get_screen("location").screen_add(
+                    f"{location['Quest Description']}\n")
+            except KeyError:
+                self.get_screen("location").screen_add(
+                    "MISSING QUEST DESCRIPTION!")
+            finally:
+                self.get_screen("location").screen_add(
+                    self.show_quests())
 
     def update_player_screen(self):
         self.get_screen("player").screen_reset()
@@ -185,7 +195,20 @@ class Game:
                 end = ". "
             stats_str = "".join([stats_str, f"{stat_value}/{stat_max} ",
                                  stat_name, end])
+        items_str = "You have "
+        if len(self.data.player["Items"]) == 0:
+            items_str = "You have nothing with you."
+        i = 0
+        for item, amount in player["Items"].items():
+            i += 1
+            if not i == len(player["Items"]):
+                end = ", "
+            else:
+                end = "."
+            items_str = "".join([
+                items_str, f"{self.get_item(item)['Name']} ({amount}){end}"])
         self.get_screen("player").screen_add(stats_str)
+        self.get_screen("player").screen_add(items_str)
 
 # COMMAND PROMPT (CP) methods:
 
@@ -222,10 +245,11 @@ class Game:
         return dict(
             (key.lower(), value) for (key, value) in loaded_call.items())
 
-    def cp_call_user(self, call):
+    def cp_call_user(self, call, loaded_call=None):
         self.cp_update_rollback(self.cp_call_user, call)
 
-        loaded_call = self.cp_call_check(call)
+        if loaded_call is None:
+            loaded_call = self.cp_call_check(call)
         try:
             answer = self.cp_question(loaded_call["question"])
         except Exception:
@@ -299,17 +323,25 @@ class Game:
 # Generic methods called by the CP
 
     def search_location(self, *args):
+        location = self.clocation()[1]
         try:
             # spend some time
-            if self.clocation()[1]["Search Level"] < 3:
-                self.clocation()[1]["Search Level"] += 1
-                if len(self.clocation()[1]["Search Rewards"][
-                        str(self.clocation()[1]["Search Level"])]) > 0:
+            if "Search Level" not in location.keys():
+                location["Search Level"] = 3
+            if "Search Rewards" not in location.keys():
+                location["Search Rewards"] = {"1": [], "2": [], "3": []}
+            for level in {"1", "2", "3"}:
+                if level not in location["Search Rewards"].keys():
+                    location["Search Rewards"][level] = []
+            if location["Search Level"] < 3:
+                location["Search Level"] += 1
+                if location["Search Rewards"][
+                        str(location["Search Level"])] != []:
                     self.get_screen("command").screen_add(
                         self.random_text("Search_2"), True)
-                    self.give_search_rewards(self.clocation()[1][
-                        "Search Rewards"][
-                            str(self.clocation()[1]["Search Level"])])
+                    self.give_rewards(location["Search Rewards"][
+                            str(location["Search Level"])],
+                            source="search")
                 else:
                     self.get_screen("command").screen_add(
                         self.random_text("Search_1"), True)
@@ -324,51 +356,53 @@ class Game:
                 return self.cp_invalid_input(
                     "GENERIC", f"MISSING SEARCH REWARDS "
                     f"FOR LEVEL {ex.args[0]}!")
-            else:
-                return self.cp_invalid_input(
-                    "GENERIC", "MISSING SEARCH LEVEL!")
 
     def go_to(self, *args):
         found_it = False
         for location_id, location in self.data.location_types.items():
-            if location["Name"].lower() == args[0]:
-                if location_id == self.clocation()[0]:
-                    return self.cp_invalid_input(
-                        "GENERIC", "You are already there.")
-                elif not self.check_path(location_id):
-                    return self.cp_invalid_input(
-                        "GENERIC", "You cannot go there from here.")
-                else:
-                    previous_location_id = self.clocation()[0]
-                    self.data.player["Location"] = location_id
-                    return self.arrive(location_id, previous_location_id)
+            if "Name" in location.keys():
+                if location["Name"].lower() == args[0]:
+                    if location_id == self.clocation()[0]:
+                        return self.cp_invalid_input(
+                            "GENERIC", "You are already there.")
+                    elif not self.check_path(location_id):
+                        return self.cp_invalid_input(
+                            "GENERIC", "You cannot go there from here.")
+                    else:
+                        previous_location_id = self.clocation()[0]
+                        self.data.player["Location"] = location_id
+                        return self.arrive(location_id, previous_location_id)
         if not found_it:
             return self.cp_invalid_input(
                 "GENERIC", "This place does not exist.")
 
     def take_item(self, *args):
+        location = self.clocation()[1]
+        if "List of Items" not in location.keys():
+            return self.cp_invalid_input(
+                "GENERIC", "There is nothing to take.")
         found_it = False
         if args[0] == "all":
-            if len(self.clocation()[1]["List of Items"]) == 0:
+            if len(location["List of Items"]) == 0:
                 return self.cp_invalid_input(
                     "GENERIC", "There is nothing to take.")
             found_it = True
-            for item_id in self.clocation()[1]["List of Items"]:
+            for item_id in location["List of Items"]:
                 self.take_it(item_id)
-            self.clocation()[1]["List of Items"] = []
+            location["List of Items"] = []
             self.get_screen("command").screen_add(
                 "You took every item you found.", True)
             self.update_screens()
         else:
             for item_id in self.data.item_types:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
-                    if item_id not in self.clocation()[1]["List of Items"]:
+                    if item_id not in location["List of Items"]:
                         return self.cp_invalid_input(
                             "GENERIC", "There is nothing like that here.")
                     else:
                         found_it = True
                         self.take_it(item_id)
-                        self.clocation()[1]["List of Items"].remove(item_id)
+                        location["List of Items"].remove(item_id)
                         self.get_screen("command").screen_add(
                             f"You took {self.get_item(item_id)['Name']}.",
                             True)
@@ -424,16 +458,19 @@ class Game:
                 found_it = True
                 for item_id, item_count in self.data.player["Items"].items():
                     for item in range(item_count):
-                        self.use_it(item_id)
+                        self.use_it(item_id, use_all=True)
                 self.get_screen("command").screen_add(
                     "You used every item you could.", True)
                 self.clean_backpack()
                 self.update_screens()
         else:
+            if self.get_item_from_name(args[0])\
+                    not in self.data.player["Items"]:
+                return self.cp_invalid_input(
+                    "GENERIC", "You don't have this item.")
             for item_id in self.data.player["Items"]:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
-                    if item_id not in self.data.player["Items"] \
-                            or self.data.player["Items"][item_id] == 0:
+                    if self.data.player["Items"][item_id] == 0:
                         return self.cp_invalid_input(
                             "GENERIC", "You don't have this item.")
                     else:
@@ -450,14 +487,56 @@ class Game:
                 "GENERIC", "There is no such item.")
         return self.cp_call_user("GENERIC")
 
-    def open_inv(self):
-        self.get_screen("command").screen_add(
-            self.show_backpack(), True, True)
-        self.refresh_screens()
-        return self.cp_call_user("GENERIC")
-
     def examine(self, *args):
         return self.cp_call_user("GENERIC")
+
+    def do_quest(self, *args):
+        location = self.clocation()[1]
+        success = False
+        try:
+            choice_index = int(args[0]) - 1
+            if choice_index < 0 or\
+                    choice_index > len(location["List of Quests"]) - 1:
+                raise ValueError
+        except (TypeError, ValueError):
+            return self.cp_invalid_input("GENERIC", "This is not an option!")
+
+        quest = location["List of Quests"][choice_index]
+
+        if quest["Type"] == "Payment":
+            if self.check_item_cost(quest["Requirements"]):
+                for item in quest["Requirements"]:
+                    self.drop_it(item, True)
+                    success = True
+            else:
+                self.cp_invalid_input(
+                    "GENERIC", "You don't have enough items!")
+        elif quest["Type"] == "Choice":
+            success = True
+        elif quest["Type"] == "Check":
+            if self.check_stat_cost(quest["Requirements"]):
+                success = True
+            else:
+                self.cp_invalid_input(
+                    "GENERIC", "You are not skilled enough to do this.")
+        if success:
+            self.get_screen("command").screen_add(quest["Thank Text"], True)
+            self.give_rewards(quest["Rewards"], source="quest")
+            location.pop("List of Quests")
+        self.update_screens()
+        return self.cp_call_user("GENERIC")
+
+# Functions for player:
+
+    def check_stat_cost(self, requirement_list):
+        logical_carry = True
+        for min_value, value in zip(requirement_list,
+                                    self.data.player["Stats"].values()):
+            if value >= min_value and logical_carry:
+                logical_carry = True
+            else:
+                return False
+        return True
 
 # Functions for locations:
 
@@ -469,6 +548,8 @@ class Game:
         return self.data.location_types[location_id]
 
     def check_path(self, location_id):
+        if "List of Paths" not in self.clocation()[1].keys():
+            return False
         for path in self.clocation()[1]["List of Paths"]:
             if path == location_id:
                 return True
@@ -481,29 +562,28 @@ class Game:
     def arrive(self, location_id, previous_location_id):
         location = self.get_location(location_id)
         previous_location = self.get_location(previous_location_id)
-
         if "is_new" not in location:
             location["is_new"] = True
         self.update_screens()
         if previous_location["is_new"]:
             previous_location["is_new"] = False
-        # do shit
         return self.cp_call_user("GENERIC")
 
     def show_items(self):
+        location = self.clocation()[1]
         item_str = ""
         try:
-            if len(self.clocation()[1]["List of Items"]) == 0:
+            if len(location["List of Items"]) == 0:
                 item_str = "There is nothing of value."
-            elif len(self.clocation()[1]["List of Items"]) == 1:
-                item = self.get_item(self.clocation()[1]['List of Items'][0])
+            elif len(location["List of Items"]) == 1:
+                item = self.get_item(location['List of Items'][0])
                 item_str = f"There is {item['Article']} {item['Name']}."
             else:
                 i = 0
                 item_str = "There are "
-                for item in self.clocation()[1]["List of Items"]:
+                for item in location["List of Items"]:
                     i += 1
-                    if not i == len(self.clocation()[1]["List of Items"]):
+                    if not i == len(location["List of Items"]):
                         end = ", "
                     else:
                         end = ". "
@@ -516,56 +596,62 @@ class Game:
 
     def show_paths(self):
         path_str = ""
-        try:
-            if len(self.clocation()[1]["List of Paths"]) == 0:
-                path_str = "You are helplessly stuck here!"
-            else:
-                i = 0
-                path_str = "There are paths to "
-                for location in self.clocation()[1]["List of Paths"]:
-                    i += 1
-                    if not i == len(self.clocation()[1]["List of Paths"]):
-                        end = ", "
-                    else:
-                        end = "."
-                    path_str = "".join(
-                        [path_str,
-                         f"{self.get_location(location)['Name']}{end}"])
-        except KeyError:
+        location = self.clocation()[1]
+        if "List of Paths" not in location.keys():
             path_str = "MISSING PATHS ENTRY!"
-        finally:
-            return path_str
+        elif len(location["List of Paths"]) == 0:
+            path_str = "You are helplessly stuck here!"
+        else:
+            i = 0
+            path_str = "There are paths to "
+            for each_location in location["List of Paths"]:
+                i += 1
+                if not i == len(location["List of Paths"]):
+                    end = ", "
+                else:
+                    end = "."
+                if "Name" in self.get_location(each_location).keys():
+                    name = self.get_location(each_location)['Name']
+                else:
+                    name = f"{each_location} MISSING NAME"
+                path_str = "".join([path_str, f"{name}{end}"])
+        return path_str
 
-    def give_search_rewards(self, reward_list):
-        for reward in reward_list:
-            if reward in self.data.location_types:
-                self.clocation()[1]["List of Paths"].append(reward)
-                self.get_screen("command").screen_add(
-                    f"You find a path to "
-                    f"{self.get_location(reward)['Name']}!", True)
-            elif reward in self.data.item_types:
-                self.clocation()[1]["List of Items"].append(reward)
-                self.get_screen("command").screen_add(
-                    f"You find {self.get_item(reward)['Article']} "
-                    f"{self.get_item(reward)['Name']}!", True)
-        # add events later
+    def show_quests(self):
+        quest_str = ""
+        location = self.clocation()[1]
+        try:
+            if not len(location["List of Quests"]) == 0:
+                for quest in location["List of Quests"]:
+                    quest_str = "".join([quest_str, quest["Text"]])
+        except KeyError:
+            quest_str = "MISSING QUESTS ENTRY!"
+        finally:
+            return quest_str
 
 # Functions for items:
 
-    def show_backpack(self):
-        if len(self.data.player["Items"]) == 0:
-            return "You have nothing with you."
-        item_str = "You have "
-        i = 0
-        for item, amount in self.data.player["Items"].items():
-            i += 1
-            if not i == len(self.data.player["Items"]):
-                end = ", "
-            else:
-                end = "."
-            item_str = "".join([
-                item_str, f"{self.get_item(item)['Name']} ({amount}){end}"])
-        return item_str
+    def give_rewards(self, reward_list, source):
+        location = self.clocation()[1]
+        for reward in reward_list:
+            if reward in self.data.location_types:
+                location["List of Paths"].append(reward)
+                if "Name" in self.get_location(reward).keys():
+                    name = self.get_location(reward)["Name"]
+                else:
+                    name = f"{reward} MISSING NAME"
+                self.get_screen("command").screen_add(
+                    f"You find a path to {name}!", True)
+            elif reward in self.data.item_types:
+                if source == "search":
+                    location["List of Items"].append(reward)
+                    reward_str = "You find "
+                elif source == "quest":
+                    self.take_it(reward)
+                    reward_str = "You receive "
+                self.get_screen("command").screen_add(
+                    f"{reward_str}{self.get_item(reward)['Article']} "
+                    f"{self.get_item(reward)['Name']}!", True)
 
     def clean_backpack(self):
         new_dict = {}
@@ -577,24 +663,48 @@ class Game:
     def get_item(self, item_id):
         return self.data.item_types[item_id]
 
-    def use_it(self, item_id):
+    def get_item_from_name(self, item_name):
+        for item_id, item in self.data.item_types.items():
+            if item["Name"].lower() == item_name:
+                return item_id
+
+    def use_it(self, item_id, use_all=False):
         item = self.get_item(item_id)
+        player = self.data.player
         if self.check_item_prereq(item_id):
-            if item["Type"] == "Consumable":
-                self.data.player["Items"][item_id] -= 1
-                if item["Action"][0] == "StatUp":
-                    self.data.player["Stats"][item["Action"][1]]\
-                        += item["Action"][2]
+            if item["Type"] == "Consumable"\
+                    and item["Action"][0] == "StatUp":
+
+                if player["Stats"][item["Action"][1]] ==\
+                        player["Max Stats"][item["Action"][1]]:
+                    if not use_all:
+                        return self.cp_invalid_input(
+                            "GENERIC", "You are already at your best.")
+
+                elif item["Action"][2] + player["Stats"][item["Action"][1]] >\
+                        player["Max Stats"][item["Action"][1]]:
+
+                    player["Stats"][item["Action"][1]] =\
+                            player["Max Stats"][item["Action"][1]]
+                    player["Items"][item_id] -= 1
+
+                else:
+                    player["Stats"][item["Action"][1]] += item["Action"][2]
+                    player["Items"][item_id] -= 1
+
+        else:
+            if not use_all:
+                return self.cp_invalid_input(
+                    "GENERIC", "You are not skilled enough to use this item.")
 
     def check_item_prereq(self, item_id):
         item = self.get_item(item_id)
-        result = True
-        for min_value, value, max_value in zip(
+        logical_carry = True
+        for min_value, value in zip(
                 item["Prerequisite"],
-                self.data.player["Stats"].values(),
-                self.data.player["Max Stats"].values()):
-            if value >= min_value and value < max_value and result:
-                result = value >= min_value and value < max_value
+                self.data.player["Stats"].values()):
+            if value >= min_value and logical_carry:
+                logical_carry = True
             else:
                 return False
         return True
@@ -604,9 +714,27 @@ class Game:
             self.data.player["Items"][item_id] = 0
         self.data.player["Items"][item_id] += 1
 
-    def drop_it(self, item_id):
+    def drop_it(self, item_id, destroy=False):
         self.data.player["Items"][item_id] -= 1
-        self.clocation()[1]["List of Items"].append(item_id)
+        if not destroy:
+            self.clocation()[1]["List of Items"].append(item_id)
+
+    def check_item_cost(self, requirement_list):
+        total_cost = {}
+        logical_carry = True
+        for item_id in requirement_list:
+            if item_id not in self.data.player["Items"]:
+                return False
+            if item_id not in total_cost:
+                total_cost[item_id] = 0
+            total_cost[item_id] += 1
+        for item_id, item_cost in total_cost.items():
+            if item_cost <= self.data.player["Items"][item_id]\
+                    and logical_carry:
+                logical_carry = True
+            else:
+                return False
+        return True
 
 # Functions for examination:
 
