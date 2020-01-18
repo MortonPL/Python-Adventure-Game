@@ -23,14 +23,27 @@
         "GENERIC":
         {
             "Text": "",
-            "Question": "What do you want to do? ",
+            "Question": "\nWhat do you want to do? ",
             "Any_key": false,
             "Search": ["search_location"],
             "Go to": ["go_to"],
             "Take": ["take_item"],
             "Drop": ["drop_item"],
+            "Use": ["use_item"],
+            "Examine": ["examine"],
             "Backpack": ["open_inv"]
         }
+    },
+
+    "Player Stats":
+    {
+        "HP" : "Health",
+        "FIT": "Fitness",
+        "REF": "Reflex",
+        "DET": "Determination",
+        "COM": "Combat Skill",
+        "SOC": "Social Skill",
+        "LUC": "Luck"
     },
 
     "Playable Characters":
@@ -39,22 +52,28 @@
         {
             "Name": "Benjamin",
             "Menu Description": "\tBenjamin, the Hunter\nAll skills average.\n",
-            "Skills": {"FIT": 5, "REF": 5, "DET": 4,
-                       "COM": 4, "SOC": 4, "LUC": 5}
+            "Stats": {"HP": 100, "FIT": 5, "REF": 5, "DET": 4,
+                      "COM": 4, "SOC": 4, "LUC": 5},
+            "Max Stats": {"HP": 100, "FIT": 8, "REF": 8, "DET": 8,
+                          "COM": 8, "SOC": 8, "LUC": 8}
         },
         "PKATH":
         {
             "Name": "Kathleen",
-            "Menu Description": "\tKathleen, the Messanger\nGood Reflex and Social Skills, bad Combat Ability.\n",
-            "Skills": {"FIT": 4, "REF": 6, "DET": 4,
-                       "COM": 2, "SOC": 6, "LUC": 5}
+            "Menu Description": "\tKathleen, the Messanger\nGood Determination and Social Skills, bad Combat Ability.\n",
+            "Stats": {"HP": 70, "FIT": 4, "REF": 5, "DET": 5,
+                      "COM": 2, "SOC": 6, "LUC": 5},
+            "Max Stats": {"HP": 70, "FIT": 7, "REF": 7, "DET": 10,
+                          "COM": 7, "SOC": 10, "LUC": 10}
         },
         "PJASN":
         {
             "Name": "Jason",
             "Menu Description": "\tJason, the Veteran\nGood Combat Ability and Fitness, bad Luck and Social Skills.\n",
-            "Skills": {"FIT": 6, "REF": 5, "DET": 4,
-                       "COM": 6, "SOC": 3, "LUC": 3}
+            "Stats": {"HP": 150, "FIT": 6, "REF": 6, "DET": 4,
+                      "COM": 6, "SOC": 3, "LUC": 3},
+            "Max Stats": {"HP": 150, "FIT": 10, "REF": 10, "DET": 7,
+                          "COM": 10, "SOC": 7, "LUC": 7}
         }
     },
 
@@ -62,30 +81,42 @@
     {
         "LD_START":
         {
-            "Name": "Debug Start Location, DO NOT TOUCH",
+            "Name": "Debug Start Location",
+            "Comment": "DO NOT EDIT",
             "is_new": true
         },
         "L_TESTA":
         {
-            "Name": "Test Location A",
-            "New Description": "You find this place for the first time.",
-            "Description": "This is an example description.",
+            "Name": "Test A",
+            "New Description": "You are in test location A for the first time.",
+            "Description": "You are in test location A.",
             "List of Paths": ["L_TESTB"],
             "List of Beings": [],
             "Search Level": 0,
-            "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": []},
+            "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": ["LD_START"]},
             "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS"],
             "is_start": true
         },
         "L_TESTB":
         {
-            "Name": "Test Location B",
-            "New Description": "You find this place for the first time. But it's B.",
-            "Description": "This is second example description.",
+            "Name": "Test B",
+            "New Description": "You are in test location B for the first time..",
+            "Description": "You are in test location B.",
+            "List of Paths": ["L_TESTC"],
+            "List of Beings": [],
+            "Search Level": 0,
+            "Search Rewards": {},
+            "List of Items": []
+        },
+        "L_TESTC":
+        {
+            "Name": "Test C",
+            "New Description": "You are in test location C for the first time.",
+            "Description": "You are in test location C.",
             "List of Paths": ["L_TESTA"],
             "List of Beings": [],
-            "Search Level": 3,
-            "Search Rewards": {},
+            "Search Level": 0,
+            "Search Rewards": {"1": ["BANDG"]},
             "List of Items": []
         }
     },
@@ -96,7 +127,8 @@
             "Name": "Bandage",
             "Article": "a",
             "Description": "A fiber bandage for treatment of small wounds.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Action Description": "You stop bleeding and feel a bit better.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", "HP", 15]
         },
@@ -105,7 +137,8 @@
             "Name": "Lucky Horseshoe",
             "Article": "a",
             "Description": "A horseshoe that is said to bring luck to the wearer.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Action Description": "You feel this symbol brings you good fortune.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", "LUC", 1]
         }
@@ -132,10 +165,10 @@
         ],
         "Search_3":
         [
-            "You already know everything about this place.\n",
-            "There are no secrets here.\n",
-            "This place has no more gifts for you.\n",
-            "You don't think it will help.\n"
+            "You already know everything about this place.",
+            "There are no secrets here.",
+            "This place has no more gifts for you.",
+            "You don't think it will help."
         ]
     }
 }
