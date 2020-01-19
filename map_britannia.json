@@ -1,13 +1,14 @@
 {
     "Version": "Game_A",
     "Name": "Earthquake in Britannia - Chapter One",
-    "Time Limit": 100,
+
+    "Time Limit": 30,
 
     "List of Calls":
     {
         "MENU_MAIN":
         {
-            "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Text": "\t\t- Earthquake in Britannia -\nChapter One: Quest for the Crown\n\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
             "Question": "What do you do? ",
             "Any_key": false,
             "1": ["menu_new_game"],
@@ -33,6 +34,27 @@
             "Kathleen": ["pick_character", "PKATH"],
             "Jason": ["pick_character", "PJASN"]
         },
+        "MENU_VICTORY":
+        {
+            "Text": "Congratulations, you have completed your mission! Who knows, maybe you even saved the country!",
+            "Question": "Press enter to end the game. ",
+            "Any_key": true,
+            "Any": ["exit"]
+        },
+        "MENU_LOST":
+        {
+            "Text": "You have failed your mission. There is very little hope for the future...",
+            "Question": "Press enter to end the game. ",
+            "Any_key": true,
+            "Any": ["exit"]
+        },
+        "ENDING":
+        {
+            "Text": "",
+            "Question": "Press enter to become history. ",
+            "Any_key": true,
+            "Any": ["menu_win_game"]
+        },
         "GENERIC":
         {
             "Text": "",
@@ -44,7 +66,14 @@
             "Drop": ["drop_item"],
             "Use": ["use_item"],
             "Examine": ["examine"],
-            "Choose": ["do_event"]
+            "Choose": ["do_event", "GENERIC"]
+        },
+        "DANGER":
+        {
+            "Text": "",
+            "Question": "\nWhat do you want to do? ",
+            "Any_key": false,
+            "Choose": ["do_event", "DANGER"]
         }
     },
 
@@ -109,8 +138,8 @@
             "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS"],
             "List of Events": [
                 {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
-                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Fitness >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
+                {"Type": "Check", "Requirements": [0, 0, 5, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Survival Skill >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
             ],
             "is_start": true
         },
@@ -121,15 +150,26 @@
             "Description": "You are in test location B.",
             "Event Description": "You find a Bandit, waiting for prey.",
             "Dangerous Event": true,
-            "List of Paths": ["L_TESTC"],
-            "List of Beings": [],
+            "List of Paths": ["L_TESTA"],
             "Search Level": 0,
             "Search Rewards": {},
-            "List of Items": []
+            "List of Items": [],
+            "List of Events": [
+                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0], "Rewards": [], "Text": "1. Try to outrun him. (Fitness >=5)\n", "Thank Text": "After a few minutes of running, the bandit gives up."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0], "Rewards": [], "Text": "2. Fight him. (Combat Skill >=5)\n", "Thank Text": "You traded blows and emerged victorious."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Try to escape him.\n", "Thank Text": "You manage to escape, but with a few scratches."}
+            ]
         },
         "L_TESTC":
         {
-            "Name": "Test C"
+            "Name": "Test C",
+            "New Description": "Wow, you're about to win the game!",
+            "Description": "Why are you here again?",
+            "List of Paths": ["L_TESTB", "L_TESTA"],
+            "Search Level": 3,
+            "List of Items": [],
+            "is_win": true
+
         }
     },
     "List of Items":
@@ -158,16 +198,16 @@
 
     "Text Variants":
     {
-        "Search_1":
+        "Search Failed":
         [
-            "The only thing you found was your own disappointment\n",
+            "The only thing you found was your own disappointment.\n",
             "You tried to find anything of value... In vain.\n",
             "You did a regular surface sweep and got the regular result. Nothing.\n",
             "You spent some time to search this place. Not enough, it seems.\n",
             "As you were looking around, you began to wonder if you're any different from a scavenger.\n",
             "Getting dirty sometimes pays off... Not in this case.\n"
         ],
-        "Search_2":
+        "Search Success":
         [
             "Time quickly passed as you were searching here. Luckily, it paid off.\n",
             "You realized the surroundings are not what they seem.\n",
@@ -176,12 +216,42 @@
             "One man's trash is... Also your trash.\n",
             "Searching the haystack for a needle seemed to have been worthwhile.\n"
         ],
-        "Search_3":
+        "Search Max":
         [
             "You already know everything about this place.",
             "There are no secrets here.",
             "This place has no more gifts for you.",
             "You don't think it will help."
+        ],
+        "Danger":
+        [
+            "A terrible chill goes down your spine.",
+            "You feel like you're going to have a bad time.",
+            "Prepare yourself!",
+            "Make your prayers.",
+            "Is this where the story ends?",
+            "Why do I hear boss music?"
+        ],
+        "Invalid Command":
+        [
+            "No, no, NO.\n",
+            "I'm afraid you can't do that.\n",
+            "Please, just play along.\n",
+            "This is impossible.\n",
+            "Stubborn, aren't we?\n",
+            "You are free to do whatever you want... within limits.\n",
+            "You can't ask for a miracle.\n",
+            "Thinking outside of the box is not welcome.\n",
+            "Think twice before you say anything.\n"
+        ],
+        "Invalid Danger Command":
+        [
+            "There is nowhere you can run.\n",
+            "Stand and die like a man.\n",
+            "You can't enjoy yourself while danger is nearby.\n",
+            "There is no turning back.\n",
+            "Remember, losing is fun.\n",
+            ""
         ]
     }
 }
