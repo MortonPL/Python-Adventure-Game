@@ -317,7 +317,7 @@ class Game:
                     call, self.random_text("Invalid Command"))
             else:
                 return self.cp_invalid_input(
-                    call, "There is no such command.\n")
+                    call, self.random_text("Invalid Command"))
 
 # Starting the program
 
@@ -430,10 +430,10 @@ class Game:
                 if location["Name"].lower() == args[0]:
                     if location_id == self.clocation()[0]:
                         return self.cp_invalid_input(
-                            "GENERIC", "You are already there.")
+                            "GENERIC", self.random_text("Already Here"))
                     elif not self.check_path(location_id):
                         return self.cp_invalid_input(
-                            "GENERIC", "You cannot go there from here.")
+                            "GENERIC", self.random_text("Missing Path"))
                     else:
                         previous_location_id = self.clocation()[0]
                         self.data.player["Location"] = location_id
@@ -441,7 +441,7 @@ class Game:
                         return self.arrive(location_id, previous_location_id)
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "This place does not exist.")
+                "GENERIC", self.random_text("Imaginary Path"))
 
     def take_item(self, *args):
         location = self.clocation()[1]
@@ -477,7 +477,7 @@ class Game:
                         break
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "There is no such item.")
+                "GENERIC", self.random_text("Imaginary Item"))
         return self.cp_call_user("GENERIC")
 
     def drop_item(self, *args):
@@ -501,7 +501,7 @@ class Game:
                     if item_id not in self.data.player["Items"] \
                             or self.data.player["Items"][item_id] == 0:
                         return self.cp_invalid_input(
-                            "GENERIC", "You don't have this item.")
+                            "GENERIC", self.random_text("Missing Item"))
                     else:
                         found_it = True
                         self.drop_it(item_id)
@@ -512,7 +512,7 @@ class Game:
                         self.update_screens()
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "There is no such item.")
+                "GENERIC", self.random_text("Imaginary Item"))
         return self.cp_call_user("GENERIC")
 
     def use_item(self, *args):
@@ -534,12 +534,12 @@ class Game:
             if self.get_item_from_name(args[0])\
                     not in self.data.player["Items"]:
                 return self.cp_invalid_input(
-                    "GENERIC", "You don't have this item.")
+                    "GENERIC", self.random_text("Missing Item"))
             for item_id in self.data.player["Items"]:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
                     if self.data.player["Items"][item_id] == 0:
                         return self.cp_invalid_input(
-                            "GENERIC", "You don't have this item.")
+                            "GENERIC", self.random_text("Missing Item"))
                     else:
                         found_it = True
                         self.use_it(item_id=item_id)
@@ -551,7 +551,7 @@ class Game:
                         self.update_screens()
         if not found_it:
             return self.cp_invalid_input(
-                "GENERIC", "There is no such item.")
+                "GENERIC", self.random_text("Imaginary Item"))
         return self.cp_call_user("GENERIC")
 
     def examine(self, *args):
@@ -566,7 +566,8 @@ class Game:
                     choice_index > len(location["List of Events"]) - 1:
                 raise ValueError
         except (TypeError, ValueError):
-            return self.cp_invalid_input(args[1], "This is not an option!")
+            return self.cp_invalid_input(
+                args[1], self.random_text("Invalid Command"))
 
         event = location["List of Events"][choice_index]
 
@@ -585,7 +586,7 @@ class Game:
                 success = True
             else:
                 return self.cp_invalid_input(
-                    args[0], "You are not skilled enough to do this.")
+                    args[0], self.random_text("Low Stat"))
         if success:
             self.get_screen("command").screen_add(event["Thank Text"], True)
             self.give_rewards(event["Rewards"], source="event")
@@ -627,7 +628,7 @@ class Game:
         player = self.data.player
         items_str = "You have "
         if len(player["Items"]) == 0:
-            items_str = "You have nothing with you."
+            items_str = self.random_text("Empty Backpack")
         i = 0
         for item, amount in player["Items"].items():
             i += 1
@@ -681,7 +682,7 @@ class Game:
         item_str = ""
         try:
             if len(location["List of Items"]) == 0:
-                item_str = "There is nothing of value."
+                item_str = self.random_text("No Items")
             elif len(location["List of Items"]) == 1:
                 item = self.get_item(location['List of Items'][0])
                 item_str = f"There is {item['Article']} {item['Name']}."
@@ -707,7 +708,7 @@ class Game:
         if "List of Paths" not in location.keys():
             path_str = "MISSING PATHS ENTRY!"
         elif len(location["List of Paths"]) == 0:
-            path_str = "You are helplessly stuck here!"
+            path_str = self.random_text(["No Paths"])
         else:
             i = 0
             path_str = "There are paths to "
@@ -794,7 +795,7 @@ class Game:
 
                         if not use_all or item is not None:
                             return self.cp_invalid_input(
-                                "GENERIC", "You are already at your best.")
+                                "GENERIC", self.random_text("Max Stat"))
 
                     elif stat_value + player["Stats"][stat] >\
                             player["Max Stats"][stat]:
@@ -812,7 +813,7 @@ class Game:
         else:
             if not use_all:
                 return self.cp_invalid_input(
-                    "GENERIC", "You are not skilled enough to use this item.")
+                    "GENERIC", self.random_text("Low Stat"))
 
     def check_item_prereq(self, item_id):
         item = self.get_item(item_id)
