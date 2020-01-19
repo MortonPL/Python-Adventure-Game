@@ -51,8 +51,9 @@ class GameData:
             "Items": {}}
         self.version = "Game_A"
         self.mapfile = None
-        self.time = None
-        self.time_limit = None
+        self.time = 0
+        self.time_limit = 0
+        self.fail = False
 
 
 class Screen:
@@ -181,6 +182,8 @@ class Game:
                 self.get_screen("location").screen_add(location["Description"])
             except KeyError:
                 self.get_screen("location").screen_add("MISSING DESCRIPTION!")
+        if "is_win" in location and location["is_win"]:
+            return None
         self.get_screen("location").screen_add(
             self.show_items())
         self.get_screen("location").screen_add(
@@ -195,36 +198,15 @@ class Game:
             finally:
                 self.get_screen("location").screen_add(
                     self.show_events())
+        if "Dangerous Event" in location and location["Dangerous Event"]:
+            self.get_screen("location").screen_add(self.random_text("Danger"))
 
     def update_player_screen(self):
         self.get_screen("player").screen_reset()
-        player = self.data.player
-        stats_str = "You have "
-        i = 0
-        for stat, stat_name in self.data.dict_of_stats.items():
-            stat_value = player["Stats"][stat]
-            stat_max = player["Max Stats"][stat]
-            i += 1
-            if not i == len(player["Stats"]):
-                end = ", "
-            else:
-                end = ". "
-            stats_str = "".join([stats_str, f"{stat_value}/{stat_max} ",
-                                 stat_name, end])
-        items_str = "You have "
-        if len(self.data.player["Items"]) == 0:
-            items_str = "You have nothing with you."
-        i = 0
-        for item, amount in player["Items"].items():
-            i += 1
-            if not i == len(player["Items"]):
-                end = ", "
-            else:
-                end = "."
-            items_str = "".join([
-                items_str, f"{self.get_item(item)['Name']} ({amount}){end}"])
-        self.get_screen("player").screen_add(stats_str)
-        self.get_screen("player").screen_add(items_str)
+        timer_str = f"You have {self.data.time_limit-self.data.time} turns."
+        self.get_screen("player").screen_add(self.show_player_stats())
+        self.get_screen("player").screen_add(self.show_player_items())
+        self.get_screen("player").screen_add(timer_str)
 
 # COMMAND PROMPT (CP) methods:
 
@@ -258,6 +240,19 @@ class Game:
                 print("Unacceptable name. Please enter another name.")
                 self.save()
 
+    def check_health(self):
+        if self.data.player["Stats"]["HP"] <= 0:
+            print("You have died and thus failed the mission. GAME OVER")
+            self.data.fail = True
+
+    def timer_tick(self):
+        if self.data.time < self.data.time_limit:
+            self.data.time += 1
+        else:
+            print("You have run out of time and "
+                  "thus failed the mission. GAME OVER")
+            self.data.fail = True
+
     def cp_invalid_input(self, call, string="Please choose a valid option."):
         self.get_screen("command").screen_add(string, True, True)
         self.refresh_screens()
@@ -282,6 +277,9 @@ class Game:
 
     def cp_call_user(self, call, loaded_call=None):
         self.cp_update_rollback(self.cp_call_user, call)
+        self.check_health()
+        if self.data.fail:
+            return self.menu_loose_game()
 
         if loaded_call is None:
             loaded_call = self.cp_call_check(call)
@@ -311,13 +309,21 @@ class Game:
                                          *answer[1:])
                     return action, action_attributes
         if not valid_answer:
-            return self.cp_invalid_input(call, "There is no such command.")
+            if call == "DANGER":
+                return self.cp_invalid_input(
+                    call, self.random_text("Invalid Danger Command"))
+            elif call == "GENERIC":
+                return self.cp_invalid_input(
+                    call, self.random_text("Invalid Command"))
+            else:
+                return self.cp_invalid_input(
+                    call, "There is no such command.\n")
 
 # Starting the program
 
     def start(self):
         self.activate_screen("command")
-        Menu(self.data, self, "MENU_SCENARIO")
+        Menu(self, "MENU_SCENARIO")
         return self.cp_call_user("MENU_SCENARIO")
 
     def keep_going(self, func_tuple):
@@ -327,11 +333,11 @@ class Game:
 # Menu methods called by the CP
 
     def menu_new_game(self, *args):
-        Menu(self.data, self, "MENU_INTRO")
+        Menu(self, "MENU_INTRO")
         return self.cp_call_user("MENU_INTRO")
 
     def menu_load_game(self, *args):
-        Menu(self.data, self, "MENU_LOAD")
+        Menu(self, "MENU_LOAD")
         return self.cp_call_user("MENU_LOAD")
 
     def menu_save_chosen(self, savefile, *args):
@@ -340,11 +346,11 @@ class Game:
 
     def menu_scenario_chosen(self, scenario, *args):
         self.parse_from_json(ReaderJSON(scenario).json_file, overlap=False)
-        Menu(self.data, self, "MENU_MAIN")
+        Menu(self, "MENU_MAIN")
         return self.cp_call_user("MENU_MAIN")
 
     def menu_pick_character(self, *args):
-        Menu(self.data, self, "MENU_CHARACTER")
+        Menu(self, "MENU_CHARACTER")
         return self.cp_call_user("MENU_CHARACTER")
 
     def pick_character(self, character, *args):
@@ -364,6 +370,18 @@ class Game:
                     return self.appear(location_id, "LD_START")
         elif state == "loaded":
             return self.appear(self.data.player["Location"], "LD_START")
+
+    def menu_win_game(self):
+        self.deactivate_screen("location")
+        self.deactivate_screen("player")
+        Menu(self, "MENU_VICTORY")
+        return self.cp_call_user("MENU_VICTORY")
+
+    def menu_loose_game(self):
+        self.deactivate_screen("location")
+        self.deactivate_screen("player")
+        Menu(self, "MENU_LOST")
+        return self.cp_call_user("MENU_LOST")
 
 # Generic methods called by the CP
 
@@ -385,16 +403,17 @@ class Game:
                 if location["Search Rewards"][
                         str(location["Search Level"])] != []:
                     self.get_screen("command").screen_add(
-                        self.random_text("Search_2"), True)
+                        self.random_text("Search Success"), True)
                     self.give_rewards(location["Search Rewards"][
                             str(location["Search Level"])],
                             source="search")
                 else:
                     self.get_screen("command").screen_add(
-                        self.random_text("Search_1"), True)
+                        self.random_text("Search Failed"), True)
+                self.timer_tick()
             else:
                 self.get_screen("command").screen_add(
-                    self.random_text("Search_3"),
+                    self.random_text("Search Max"),
                     True)
             self.update_screens()
             return self.cp_call_user("GENERIC")
@@ -418,6 +437,7 @@ class Game:
                     else:
                         previous_location_id = self.clocation()[0]
                         self.data.player["Location"] = location_id
+                        self.timer_tick()
                         return self.arrive(location_id, previous_location_id)
         if not found_it:
             return self.cp_invalid_input(
@@ -541,12 +561,12 @@ class Game:
         location = self.clocation()[1]
         success = False
         try:
-            choice_index = int(args[0]) - 1
+            choice_index = int(args[1]) - 1
             if choice_index < 0 or\
                     choice_index > len(location["List of Events"]) - 1:
                 raise ValueError
         except (TypeError, ValueError):
-            return self.cp_invalid_input("GENERIC", "This is not an option!")
+            return self.cp_invalid_input(args[1], "This is not an option!")
 
         event = location["List of Events"][choice_index]
 
@@ -556,20 +576,22 @@ class Game:
                     self.drop_it(item, True)
                     success = True
             else:
-                self.cp_invalid_input(
-                    "GENERIC", "You don't have enough items!")
+                return self.cp_invalid_input(
+                    args[0], "You don't have enough items!")
         elif event["Type"] == "Choice":
             success = True
         elif event["Type"] == "Check":
             if self.check_stat_cost(event["Requirements"]):
                 success = True
             else:
-                self.cp_invalid_input(
-                    "GENERIC", "You are not skilled enough to do this.")
+                return self.cp_invalid_input(
+                    args[0], "You are not skilled enough to do this.")
         if success:
             self.get_screen("command").screen_add(event["Thank Text"], True)
             self.give_rewards(event["Rewards"], source="event")
             location.pop("List of Events")
+            location.pop("Event Description")
+            location.pop("Dangerous Event", None)
         self.update_screens()
         return self.cp_call_user("GENERIC")
 
@@ -584,6 +606,38 @@ class Game:
             else:
                 return False
         return True
+
+    def show_player_stats(self):
+        player = self.data.player
+        stats_str = "You have "
+        i = 0
+        for stat, stat_name in self.data.dict_of_stats.items():
+            stat_value = player["Stats"][stat]
+            stat_max = player["Max Stats"][stat]
+            i += 1
+            if not i == len(player["Stats"]):
+                end = ", "
+            else:
+                end = ". "
+            stats_str = "".join([stats_str, f"{stat_value}/{stat_max} ",
+                                stat_name, end])
+        return stats_str
+
+    def show_player_items(self):
+        player = self.data.player
+        items_str = "You have "
+        if len(player["Items"]) == 0:
+            items_str = "You have nothing with you."
+        i = 0
+        for item, amount in player["Items"].items():
+            i += 1
+            if not i == len(player["Items"]):
+                end = ", "
+            else:
+                end = "."
+            items_str = "".join([
+                items_str, f"{self.get_item(item)['Name']} ({amount}){end}"])
+        return items_str
 
 # Functions for locations:
 
@@ -614,7 +668,13 @@ class Game:
         self.update_screens()
         if previous_location["is_new"]:
             previous_location["is_new"] = False
-        return self.cp_call_user("GENERIC")
+        if "is_win" in location and location["is_win"]:
+            return self.cp_call_user("ENDING")
+        elif "Dangerous Event" not in location\
+                or not location["Dangerous Event"]:
+            return self.cp_call_user("GENERIC")
+        else:
+            return self.cp_call_user("DANGER")
 
     def show_items(self):
         location = self.clocation()[1]
@@ -803,9 +863,9 @@ class Game:
 
 class Menu:
 
-    def __init__(self, data_object, game, call_key):
-        self.data = data_object
+    def __init__(self, game, call_key):
         self.game = game
+        self.data = self.game.data
         self.call_key = call_key
         self.start()
 
@@ -816,18 +876,22 @@ class Menu:
 
     def read_menu(self):
         self.game.get_screen("menu").screen_reset()
+        call = self.game.cp_call_check(self.call_key)
 
-        if "text" in self.game.cp_call_check(self.call_key):
-            self.game.get_screen("menu").screen_add(self.game.cp_call_check(
-                self.call_key)["text"])
+        if "text" in call:
+            self.game.get_screen("menu").screen_add(call["text"])
         if self.call_key == "MENU_CHARACTER":
             self.write_characters()
-        if self.call_key == "MENU_SCENARIO":
+        elif self.call_key == "MENU_SCENARIO":
             self.add_scenarios_as_answers(
                 self.read_directory(read_type="map"), add_type="map")
-        if self.call_key == "MENU_LOAD":
+        elif self.call_key == "MENU_LOAD":
             self.add_scenarios_as_answers(
                 self.read_directory(read_type="save"), add_type="save")
+        elif self.call_key == "MENU_VICTORY":
+            self.show_ending_screen()
+        elif self.call_key == "MENU_LOST":
+            self.show_ending_screen()
 
         self.game.refresh_screens()
 
@@ -881,6 +945,15 @@ class Menu:
         for index, entry in enumerate(scenarios):
             self.data.sys_call_types[call][f"{index + 1}"] =\
                 [next_function, entry[0]]
+
+    def show_ending_screen(self, state):
+        self.game.get_screen("menu").screen_add(
+            f"Your name: {self.data.player['Name']}")
+        self.game.get_screen("menu").screen_add(
+            f"Turns left {self.data.time_limit - self.data.time}"
+            f"/{self.data.time_limit}")
+        self.get_screen("menu").screen_add(self.show_player_stats())
+        self.get_screen("menu").screen_add(self.show_player_items())
 
 
 if __name__ == "__main__":
