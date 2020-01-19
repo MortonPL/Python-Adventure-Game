@@ -10,18 +10,11 @@ import random
 system = {
     "List of Calls":
     {
-        "MENU_MAIN":
+        "MENU_LOAD":
         {
-            "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. "
-            "Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
-            "Question": "What do you do? ",
-            "Any_key": False,
-            "1": ["menu_new_game"],
-            "Begin a new game": ["menu_new_game"],
-            "2": ["menu_load_game"],
-            "Load a saved game": ["menu_load_game"],
-            "3": ["exit"],
-            "Exit": ["exit"]
+            "Text": "Available save files:\n\n",
+            "Question": "Choose the save file you want to load. ",
+            "Any_key": False
         },
         "MENU_SCENARIO":
         {
@@ -50,13 +43,16 @@ class GameData:
         self.text_variation = {}
         self.player = {
             "Name": "Anonymus",
-            "Stats": {"HP": 100, "FIT": 0, "REF": 0, "DET": 0,
+            "Stats": {"HP": 100, "FIT": 0, "SRV": 0,
                       "COM": 0, "SOC": 0, "LUC": 0},
-            "Max Stats": {"HP": 100, "FIT": 1, "REF": 1, "DET": 1,
+            "Max Stats": {"HP": 100, "FIT": 1, "SRV": 1,
                           "COM": 1, "SOC": 1, "LUC": 1},
             "Location": "",
             "Items": {}}
         self.version = "Game_A"
+        self.mapfile = None
+        self.time = None
+        self.time_limit = None
 
 
 class Screen:
@@ -104,7 +100,11 @@ class Screen:
 class ReaderJSON:
     def __init__(self, path):
         with open(os.path.join(sys.path[0], path), "r") as file:
-            self.json_file = json.load(file)
+            try:
+                self.json_file = json.load(file)
+                self.json_load_ok = True
+            except Exception:
+                self.json_load_ok = False
 
 
 class Game:
@@ -115,13 +115,29 @@ class Game:
 
 # Parsing functions:
 
-    def parse_from_json(self, json):
+    def parse_from_json(self, json, overlap):
         self.data.location_types = json["List of Locations"]
-        self.data.item_types = json["List of Items"]
-        self.data.text_variation = json["Text Variants"]
-        self.data.call_types = json["List of Calls"]
-        self.data.character_types = json["Playable Characters"]
-        self.data.dict_of_stats = json["Player Stats"]
+        if not overlap:
+            self.data.item_types = json["List of Items"]
+            self.data.text_variation = json["Text Variants"]
+            self.data.call_types = json["List of Calls"]
+            self.data.character_types = json["Playable Characters"]
+            self.data.dict_of_stats = json["Player Stats"]
+            self.data.mapfile = json["Name"]
+            self.data.time_limit = json["Time Limit"]
+        else:
+            self.data.player = json["Player"]
+            self.data.time = json["Time"]
+
+    def dump_to_json(self):
+        save_data = {
+            "Version": self.data.version,
+            "Name": self.data.mapfile,
+            "List of Locations": self.data.location_types,
+            "Player": self.data.player,
+            "Time": self.data.time
+        }
+        return save_data
 
 # Screen functions:
 
@@ -169,16 +185,16 @@ class Game:
             self.show_items())
         self.get_screen("location").screen_add(
             self.show_paths())
-        if "List of Quests" in location.keys():
+        if "List of Events" in location.keys():
             try:
                 self.get_screen("location").screen_add(
-                    f"{location['Quest Description']}\n")
+                    f"{location['Event Description']}\n")
             except KeyError:
                 self.get_screen("location").screen_add(
-                    "MISSING QUEST DESCRIPTION!")
+                    "MISSING EVENT DESCRIPTION!")
             finally:
                 self.get_screen("location").screen_add(
-                    self.show_quests())
+                    self.show_events())
 
     def update_player_screen(self):
         self.get_screen("player").screen_reset()
@@ -217,13 +233,30 @@ class Game:
         self.data.rollback_args = args
 
     def exit(self, *args):
-        if input("\nAre you sure about that? (Type in QUIT to confirm.) ") == \
-                "QUIT":
+        confirm = input(
+            "\nAre you sure about that? (Type in QUIT to confirm) ")
+        if confirm.lower() == "quit":
             self.get_screen("command").screen_clear()
             exit()
         else:
             self.refresh_screens()
             return self.data.rollback(*self.data.rollback_args)
+
+    def save(self, *args):
+        confirm = input("\nType in the name of your save state."
+                        "(Type in CANCEL to cancel) ")
+        if confirm.lower() == "cancel":
+            self.refresh_screens()
+            return self.data.rollback(*self.data.rollback_args)
+        else:
+            try:
+                with open(f"save_{confirm}.json", "w") as file:
+                    json.dump(self.dump_to_json(), file, indent=4)
+                print("Saved successfully.")
+                return self.cp_call_user("GENERIC")
+            except Exception:
+                print("Unacceptable name. Please enter another name.")
+                self.save()
 
     def cp_invalid_input(self, call, string="Please choose a valid option."):
         self.get_screen("command").screen_add(string, True, True)
@@ -240,6 +273,8 @@ class Game:
                 loaded_call = self.data.sys_call_types[call]
             elif call in self.data.call_types:
                 loaded_call = self.data.call_types[call]
+            else:
+                raise Exception
         except Exception:
             sys.exit(f"Something went wrong, call {call} does not exist.")
         return dict(
@@ -259,6 +294,9 @@ class Game:
         if answer == ["quit"]:
             valid_answer = True
             return self.exit()
+        elif answer == ["save"]:
+            valid_answer = True
+            return self.save()
         elif loaded_call["any_key"]:
             valid_answer = True
             action = getattr(self, loaded_call["any"][0])
@@ -279,8 +317,8 @@ class Game:
 
     def start(self):
         self.activate_screen("command")
-        Menu(self.data, self, "MENU_MAIN")
-        return self.cp_call_user("MENU_MAIN")
+        Menu(self.data, self, "MENU_SCENARIO")
+        return self.cp_call_user("MENU_SCENARIO")
 
     def keep_going(self, func_tuple):
         func, func_attribs = func_tuple
@@ -289,17 +327,21 @@ class Game:
 # Menu methods called by the CP
 
     def menu_new_game(self, *args):
-        Menu(self.data, self, "MENU_SCENARIO")
-        return self.cp_call_user("MENU_SCENARIO")
-
-    def menu_load_game(self, *args):
-        # load a saved game
-        pass
-
-    def menu_new_scenario(self, scenario, *args):
-        self.parse_from_json(ReaderJSON(scenario).json_file)
         Menu(self.data, self, "MENU_INTRO")
         return self.cp_call_user("MENU_INTRO")
+
+    def menu_load_game(self, *args):
+        Menu(self.data, self, "MENU_LOAD")
+        return self.cp_call_user("MENU_LOAD")
+
+    def menu_save_chosen(self, savefile, *args):
+        self.parse_from_json(ReaderJSON(savefile).json_file, overlap=True)
+        return self.begin_adventure(state="loaded")
+
+    def menu_scenario_chosen(self, scenario, *args):
+        self.parse_from_json(ReaderJSON(scenario).json_file, overlap=False)
+        Menu(self.data, self, "MENU_MAIN")
+        return self.cp_call_user("MENU_MAIN")
 
     def menu_pick_character(self, *args):
         Menu(self.data, self, "MENU_CHARACTER")
@@ -309,16 +351,19 @@ class Game:
         for entry in self.data.character_types[character]:
             self.data.player[entry] = self.data.character_types[
                 character][entry]
-        return self.begin_adventure()
+        return self.begin_adventure(state="new")
 
-    def begin_adventure(self):
+    def begin_adventure(self, state):
         self.get_screen("menu").screen_reset()
         self.activate_screen("location")
         self.activate_screen("player")
         self.deactivate_screen("menu")
-        for location_id, location in self.data.location_types.items():
-            if "is_start" in location:
-                return self.appear(location_id, "LD_START")
+        if state == "new":
+            for location_id, location in self.data.location_types.items():
+                if "is_start" in location:
+                    return self.appear(location_id, "LD_START")
+        elif state == "loaded":
+            return self.appear(self.data.player["Location"], "LD_START")
 
 # Generic methods called by the CP
 
@@ -328,10 +373,12 @@ class Game:
             # spend some time
             if "Search Level" not in location.keys():
                 location["Search Level"] = 3
-            if "Search Rewards" not in location.keys():
+            if "Search Rewards" not in location.keys()\
+                    or type(location["Search Rewards"]) is not dict:
                 location["Search Rewards"] = {"1": [], "2": [], "3": []}
             for level in {"1", "2", "3"}:
-                if level not in location["Search Rewards"].keys():
+                if level not in location["Search Rewards"].keys()\
+                        or type(location["Search Rewards"][level]) is not list:
                     location["Search Rewards"][level] = []
             if location["Search Level"] < 3:
                 location["Search Level"] += 1
@@ -458,7 +505,7 @@ class Game:
                 found_it = True
                 for item_id, item_count in self.data.player["Items"].items():
                     for item in range(item_count):
-                        self.use_it(item_id, use_all=True)
+                        self.use_it(item_id=item_id, use_all=True)
                 self.get_screen("command").screen_add(
                     "You used every item you could.", True)
                 self.clean_backpack()
@@ -475,7 +522,7 @@ class Game:
                             "GENERIC", "You don't have this item.")
                     else:
                         found_it = True
-                        self.use_it(item_id)
+                        self.use_it(item_id=item_id)
                         self.get_screen("command").screen_add(
                             f"You used {self.get_item(item_id)['Name']}. "
                             f"{self.get_item(item_id)['Action Description']}",
@@ -490,39 +537,39 @@ class Game:
     def examine(self, *args):
         return self.cp_call_user("GENERIC")
 
-    def do_quest(self, *args):
+    def do_event(self, *args):
         location = self.clocation()[1]
         success = False
         try:
             choice_index = int(args[0]) - 1
             if choice_index < 0 or\
-                    choice_index > len(location["List of Quests"]) - 1:
+                    choice_index > len(location["List of Events"]) - 1:
                 raise ValueError
         except (TypeError, ValueError):
             return self.cp_invalid_input("GENERIC", "This is not an option!")
 
-        quest = location["List of Quests"][choice_index]
+        event = location["List of Events"][choice_index]
 
-        if quest["Type"] == "Payment":
-            if self.check_item_cost(quest["Requirements"]):
-                for item in quest["Requirements"]:
+        if event["Type"] == "Payment":
+            if self.check_item_cost(event["Requirements"]):
+                for item in event["Requirements"]:
                     self.drop_it(item, True)
                     success = True
             else:
                 self.cp_invalid_input(
                     "GENERIC", "You don't have enough items!")
-        elif quest["Type"] == "Choice":
+        elif event["Type"] == "Choice":
             success = True
-        elif quest["Type"] == "Check":
-            if self.check_stat_cost(quest["Requirements"]):
+        elif event["Type"] == "Check":
+            if self.check_stat_cost(event["Requirements"]):
                 success = True
             else:
                 self.cp_invalid_input(
                     "GENERIC", "You are not skilled enough to do this.")
         if success:
-            self.get_screen("command").screen_add(quest["Thank Text"], True)
-            self.give_rewards(quest["Rewards"], source="quest")
-            location.pop("List of Quests")
+            self.get_screen("command").screen_add(event["Thank Text"], True)
+            self.give_rewards(event["Rewards"], source="event")
+            location.pop("List of Events")
         self.update_screens()
         return self.cp_call_user("GENERIC")
 
@@ -617,24 +664,28 @@ class Game:
                 path_str = "".join([path_str, f"{name}{end}"])
         return path_str
 
-    def show_quests(self):
-        quest_str = ""
+    def show_events(self):
+        event_str = ""
         location = self.clocation()[1]
         try:
-            if not len(location["List of Quests"]) == 0:
-                for quest in location["List of Quests"]:
-                    quest_str = "".join([quest_str, quest["Text"]])
+            if not len(location["List of Events"]) == 0:
+                for event in location["List of Events"]:
+                    event_str = "".join([event_str, event["Text"]])
         except KeyError:
-            quest_str = "MISSING QUESTS ENTRY!"
+            event_str = "MISSING EVENTS ENTRY!"
         finally:
-            return quest_str
+            return event_str
 
 # Functions for items:
 
     def give_rewards(self, reward_list, source):
         location = self.clocation()[1]
         for reward in reward_list:
-            if reward in self.data.location_types:
+            if type(reward) is dict:
+                fake_item = {"Type": "Consumable",
+                             "Action": ["StatUp", reward]}
+                self.use_it(item=fake_item)
+            elif reward in self.data.location_types:
                 location["List of Paths"].append(reward)
                 if "Name" in self.get_location(reward).keys():
                     name = self.get_location(reward)["Name"]
@@ -646,7 +697,7 @@ class Game:
                 if source == "search":
                     location["List of Items"].append(reward)
                     reward_str = "You find "
-                elif source == "quest":
+                elif source == "event":
                     self.take_it(reward)
                     reward_str = "You receive "
                 self.get_screen("command").screen_add(
@@ -668,29 +719,35 @@ class Game:
             if item["Name"].lower() == item_name:
                 return item_id
 
-    def use_it(self, item_id, use_all=False):
-        item = self.get_item(item_id)
+    def use_it(self, item_id=None, use_all=False, item=None):
         player = self.data.player
-        if self.check_item_prereq(item_id):
+        if item is None:
+            item = self.get_item(item_id)
+        if item is not None or self.check_item_prereq(item_id):
             if item["Type"] == "Consumable"\
                     and item["Action"][0] == "StatUp":
 
-                if player["Stats"][item["Action"][1]] ==\
-                        player["Max Stats"][item["Action"][1]]:
-                    if not use_all:
-                        return self.cp_invalid_input(
-                            "GENERIC", "You are already at your best.")
+                for stat, stat_value in item["Action"][1].items():
 
-                elif item["Action"][2] + player["Stats"][item["Action"][1]] >\
-                        player["Max Stats"][item["Action"][1]]:
+                    if player["Stats"][stat] == player["Max Stats"][stat]\
+                            and stat_value >= 0:
 
-                    player["Stats"][item["Action"][1]] =\
-                            player["Max Stats"][item["Action"][1]]
-                    player["Items"][item_id] -= 1
+                        if not use_all or item is not None:
+                            return self.cp_invalid_input(
+                                "GENERIC", "You are already at your best.")
+
+                    elif stat_value + player["Stats"][stat] >\
+                            player["Max Stats"][stat]:
+
+                        player["Stats"][stat] = player["Max Stats"][stat]
+
+                    if item is None:
+                        player["Items"][item_id] -= 1
 
                 else:
-                    player["Stats"][item["Action"][1]] += item["Action"][2]
-                    player["Items"][item_id] -= 1
+                    player["Stats"][stat] += stat_value
+                    if item is None:
+                        player["Items"][item_id] -= 1
 
         else:
             if not use_all:
@@ -766,7 +823,11 @@ class Menu:
         if self.call_key == "MENU_CHARACTER":
             self.write_characters()
         if self.call_key == "MENU_SCENARIO":
-            self.add_scenarios_as_answers(self.read_directory())
+            self.add_scenarios_as_answers(
+                self.read_directory(read_type="map"), add_type="map")
+        if self.call_key == "MENU_LOAD":
+            self.add_scenarios_as_answers(
+                self.read_directory(read_type="save"), add_type="save")
 
         self.game.refresh_screens()
 
@@ -775,24 +836,51 @@ class Menu:
             self.game.get_screen("menu").screen_add(
                 self.data.character_types[each]["Menu Description"])
 
-    def read_directory(self):
+    def read_directory(self, read_type="map"):
         scenarios = []
+        prefix = f"{read_type}_"
         folder = list(filter(
-            lambda x: x.endswith(".json") and x.startswith("map_"),
+            lambda x: x.endswith(".json") and x.startswith(prefix),
             os.listdir(self.data.path)))
-        for mapfile in folder:
-            reader = ReaderJSON(mapfile)
-            if "Version" in reader.json_file and reader.json_file["Version"]\
-                    == self.data.version:
-                scenarios.append((mapfile, reader.json_file["Name"]))
-        for index, entry in enumerate(scenarios):
-            self.game.get_screen("menu").screen_add(f"{index+1}. {entry[1]}")
+        for file in folder:
+            reader = ReaderJSON(file)
+            if reader.json_load_ok:
+                if "Version" in reader.json_file\
+                        and reader.json_file["Version"] == self.data.version:
+                    if read_type == "map":
+                        scenarios.append((file, reader.json_file["Name"]))
+                    elif read_type == "save":
+                        scenarios.append((file, file))
+                else:
+                    self.game.get_screen("menu").screen_add(
+                        f"{file} has incorrect version.")
+            else:
+                self.game.get_screen("menu").screen_add(
+                    f"{file} contains a JSON error.")
+
+        if len(scenarios) != 0:
+            for index, entry in enumerate(scenarios):
+                self.game.get_screen("menu").screen_add(
+                    f"{index+1}. {entry[1]}")
+        else:
+            if read_type == "map":
+                self.game.get_screen("command").screen_add(
+                    "\nNo valid scenarios detected. Type 'quit' to exit.")
+            elif read_type == "save":
+                self.game.get_screen("command").screen_add(
+                    "\nNo valid save files detected. Type 'quit' to exit.")
         return scenarios
 
-    def add_scenarios_as_answers(self, scenarios):
+    def add_scenarios_as_answers(self, scenarios, add_type="map"):
+        if add_type == "map":
+            call = "MENU_SCENARIO"
+            next_function = "menu_scenario_chosen"
+        elif add_type == "save":
+            call = "MENU_LOAD"
+            next_function = "menu_save_chosen"
         for index, entry in enumerate(scenarios):
-            self.data.sys_call_types["MENU_SCENARIO"][f"{index + 1}"] =\
-                ["menu_new_scenario", entry[0]]
+            self.data.sys_call_types[call][f"{index + 1}"] =\
+                [next_function, entry[0]]
 
 
 if __name__ == "__main__":

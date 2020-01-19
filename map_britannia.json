@@ -1,9 +1,22 @@
 {
     "Version": "Game_A",
-    "Name": "NONAME - Chapter One",
+    "Name": "Earthquake in Britannia - Chapter One",
+    "Time Limit": 100,
 
     "List of Calls":
     {
+        "MENU_MAIN":
+        {
+            "Text": "\t\tNONAME GAME\n\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Question": "What do you do? ",
+            "Any_key": false,
+            "1": ["menu_new_game"],
+            "Begin a new game": ["menu_new_game"],
+            "2": ["menu_load_game"],
+            "Load a saved game": ["menu_load_game"],
+            "3": ["exit"],
+            "Exit": ["exit"]
+        },
         "MENU_INTRO":
         {
             "Text": "Europe was still recovering from the devastation brought by the Great War, when troubling rumours\nof unknown animals appearing on British Isles began to spread. Not so long after, the British found\nthemselves invaded by some kind of intelligent subterranean humanoid creatures. So-called Undermen\ncame through underground tunnels to wage war upon the surface. Even though the decimated Royal Army\ntried to halt the spread of Undermen through the country, it is certain that the current conventional\nmeans are not enough to repel the invaders. To turn the tide of the war, the brightest minds of the Crown\nhave been tasked with creating a super weapon. That is how the Earthquake Bomb was born - a powerful\nexplosive ordnance that would be detonated underground to destroy endless tunnels dug by the Undermen.\n\nYou, a daring soldier of the Crown, have volunteered to take the bomb schematics and safely bring them\nto the Royal Special Weapons Facility, where it will be constructed. You will have to\nmake your way through a war torn country filled with hostile creatures from another world.\n\nIf you succeed, you will be a hero.",
@@ -31,7 +44,7 @@
             "Drop": ["drop_item"],
             "Use": ["use_item"],
             "Examine": ["examine"],
-            "Choose": ["do_quest"]
+            "Choose": ["do_event"]
         }
     },
 
@@ -39,8 +52,7 @@
     {
         "HP" : "Health",
         "FIT": "Fitness",
-        "REF": "Reflex",
-        "DET": "Determination",
+        "SRV": "Survival Skill",
         "COM": "Combat Skill",
         "SOC": "Social Skill",
         "LUC": "Luck"
@@ -52,27 +64,27 @@
         {
             "Name": "Benjamin",
             "Menu Description": "\tBenjamin, the Hunter\nAll skills average.\n",
-            "Stats": {"HP": 100, "FIT": 5, "REF": 5, "DET": 4,
-                      "COM": 4, "SOC": 4, "LUC": 5},
-            "Max Stats": {"HP": 100, "FIT": 8, "REF": 8, "DET": 8,
+            "Stats": {"HP": 100, "FIT": 5, "SRV": 5,
+                      "COM": 4, "SOC": 4, "LUC": 4},
+            "Max Stats": {"HP": 100, "FIT": 8, "SRV": 8,
                           "COM": 8, "SOC": 8, "LUC": 8}
         },
         "PKATH":
         {
             "Name": "Kathleen",
-            "Menu Description": "\tKathleen, the Messanger\nGood Determination and Social Skills, bad Combat Ability.\n",
-            "Stats": {"HP": 70, "FIT": 4, "REF": 5, "DET": 5,
-                      "COM": 2, "SOC": 6, "LUC": 5},
-            "Max Stats": {"HP": 70, "FIT": 7, "REF": 7, "DET": 10,
+            "Menu Description": "\tKathleen, the Messanger\nGood Luck and Social Skills, bad Combat Ability and Strength.\n",
+            "Stats": {"HP": 70, "FIT": 4, "SRV": 4,
+                      "COM": 2, "SOC": 6, "LUC": 6},
+            "Max Stats": {"HP": 70, "FIT": 7, "SRV": 10,
                           "COM": 7, "SOC": 10, "LUC": 10}
         },
         "PJASN":
         {
             "Name": "Jason",
-            "Menu Description": "\tJason, the Veteran\nGood Combat Ability and Fitness, bad Luck and Social Skills.\n",
-            "Stats": {"HP": 150, "FIT": 6, "REF": 6, "DET": 4,
+            "Menu Description": "\tJason, the Veteran\nGood Combat Ability, Fitness and Strength, bad Luck and Social Skills.\n",
+            "Stats": {"HP": 150, "FIT": 6, "SRV": 4,
                       "COM": 6, "SOC": 3, "LUC": 3},
-            "Max Stats": {"HP": 150, "FIT": 10, "REF": 10, "DET": 7,
+            "Max Stats": {"HP": 150, "FIT": 10, "SRV": 7,
                           "COM": 10, "SOC": 7, "LUC": 7}
         }
     },
@@ -90,15 +102,15 @@
             "Name": "Test A",
             "New Description": "You are in test location A for the first time.",
             "Description": "You are in test location A.",
-            "Quest Description": "An old man asks you to help him with his injuries. What do you do?",
+            "Event Description": "An old man asks you to help him with his injuries. What do you do?",
             "List of Paths": ["L_TESTB"],
             "Search Level": 0,
             "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": ["LD_START"]},
             "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS"],
-            "List of Quests": [
+            "List of Events": [
                 {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
-                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Fitness >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
+                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Fitness >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
             ],
             "is_start": true
         },
@@ -107,10 +119,12 @@
             "Name": "Test B",
             "New Description": "You are in test location B for the first time..",
             "Description": "You are in test location B.",
-            "List of Paths": ["L_TESTA"],
+            "Event Description": "You find a Bandit, waiting for prey.",
+            "Dangerous Event": true,
+            "List of Paths": ["L_TESTC"],
             "List of Beings": [],
             "Search Level": 0,
-            "Search Rewards": {"1": 1},
+            "Search Rewards": {},
             "List of Items": []
         },
         "L_TESTC":
@@ -126,9 +140,9 @@
             "Article": "a",
             "Description": "A fiber bandage for treatment of small wounds.",
             "Action Description": "You stop bleeding and feel a bit better.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["StatUp", "HP", 15]
+            "Action": ["StatUp", {"HP": 15}]
         },
         "LCKHS":
         {
@@ -136,9 +150,9 @@
             "Article": "a",
             "Description": "A horseshoe that is said to bring luck to the wearer.",
             "Action Description": "You feel this symbol brings you good fortune.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["StatUp", "LUC", 1]
+            "Action": ["StatUp", {"LUC": 1}]
         }
     },
 
