@@ -239,6 +239,7 @@
             "Please, just play along.\n",
             "This is impossible.\n",
             "Stubborn, aren't we?\n",
+            "This is not an option!\n",
             "You are free to do whatever you want... within limits.\n",
             "You can't ask for a miracle.\n",
             "Thinking outside of the box is not welcome.\n",
@@ -250,8 +251,75 @@
             "Stand and die like a man.\n",
             "You can't enjoy yourself while danger is nearby.\n",
             "There is no turning back.\n",
-            "Remember, losing is fun.\n",
-            ""
+            "Remember, losing is fun.\n"
+        ],
+        "Max Stat":
+        [
+            "You are already at your best.",
+            "There are limits to your human body.",
+            "You can't get any better than this.",
+            "You cannot achieve perfection"
+        ],
+        "Low Stat":
+        [
+            "You are not skilled enough to do this.",
+            "First, you must improve yourself.",
+            "You are too weak.",
+            "You do not have what it takes."
+        ],
+        "No Paths":
+        [
+            "You are helplessly stuck here!",
+            "There is no way out... yet.",
+            "You wonder where will you go now."
+        ],
+        "Missing Path":
+        [
+            "You cannot go there from here.",
+            "There's no way to there.",
+            "Not every road leads to Rome.",
+            "And how do you think you're going to do it?"
+        ],
+        "Imaginary Path":
+        [
+            "This place does not exist.",
+            "There is no 'there'.",
+            "You might as well go to Atlantis.",
+            "You can't go to a place that does not exist."
+        ],
+        "Already Here":
+        [
+            "You are already there.",
+            "You are standing in this very place.",
+            "There is here.",
+            "The movement vector is zero, as far as your understanding of physics goes."
+        ],
+        "No Items":
+        [
+            "There is nothing of value.",
+            "You find nothing but trash.",
+            "You won't get richer here.",
+            "The emptiness of this place is worrying you."
+        ],
+        "Missing Item":
+        [
+            "You don't have this item.",
+            "You can't use what you don't have.",
+            "You can't make this work with your guts alone."
+        ],
+        "Imaginary Item":
+        [
+            "There is no such item.",
+            "This thing does not exist.",
+            "Quit making things up",
+            "Are you losing your mind?"
+        ],
+        "Empty Backpack":
+        [
+            "You have nothing with you.",
+            "You feel really poor.",
+            "The words of Matthew 5:3 echo inside your head.",
+            "You feel that your backpack is way too light."
         ]
     }
 }
