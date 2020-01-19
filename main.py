@@ -54,6 +54,7 @@ class GameData:
         self.time = 0
         self.time_limit = 0
         self.fail = False
+        self.already_failed = False
 
 
 class Screen:
@@ -203,7 +204,7 @@ class Game:
 
     def update_player_screen(self):
         self.get_screen("player").screen_reset()
-        timer_str = f"You have {self.data.time_limit-self.data.time} turns."
+        timer_str = f"You have {self.data.time_limit - self.data.time} turns."
         self.get_screen("player").screen_add(self.show_player_stats())
         self.get_screen("player").screen_add(self.show_player_items())
         self.get_screen("player").screen_add(timer_str)
@@ -234,8 +235,9 @@ class Game:
             try:
                 with open(f"save_{confirm}.json", "w") as file:
                     json.dump(self.dump_to_json(), file, indent=4)
-                print("Saved successfully.")
-                return self.cp_call_user("GENERIC")
+                self.get_screen("command").screen_add("Saved successfully.")
+                self.refresh_screens()
+                return self.data.rollback(*self.data.rollback_args)
             except Exception:
                 print("Unacceptable name. Please enter another name.")
                 self.save()
@@ -278,7 +280,7 @@ class Game:
     def cp_call_user(self, call, loaded_call=None):
         self.cp_update_rollback(self.cp_call_user, call)
         self.check_health()
-        if self.data.fail:
+        if self.data.fail and not self.data.already_failed:
             return self.menu_loose_game()
 
         if loaded_call is None:
@@ -293,8 +295,13 @@ class Game:
             valid_answer = True
             return self.exit()
         elif answer == ["save"]:
-            valid_answer = True
-            return self.save()
+            if call not in {"MENU_SCENARIO", "MENU_MAIN", "MENU_INTRO",
+                            "MENU_CHARACTER", "ENDING"}:
+                valid_answer = True
+                return self.save()
+            else:
+                return self.cp_invalid_input(
+                    call, "You cannot save here.\n")
         elif loaded_call["any_key"]:
             valid_answer = True
             action = getattr(self, loaded_call["any"][0])
@@ -381,6 +388,7 @@ class Game:
         self.deactivate_screen("location")
         self.deactivate_screen("player")
         Menu(self, "MENU_LOST")
+        self.data.already_failed = True
         return self.cp_call_user("MENU_LOST")
 
 # Generic methods called by the CP
@@ -947,14 +955,14 @@ class Menu:
             self.data.sys_call_types[call][f"{index + 1}"] =\
                 [next_function, entry[0]]
 
-    def show_ending_screen(self, state):
+    def show_ending_screen(self):
         self.game.get_screen("menu").screen_add(
             f"Your name: {self.data.player['Name']}")
         self.game.get_screen("menu").screen_add(
             f"Turns left {self.data.time_limit - self.data.time}"
             f"/{self.data.time_limit}")
-        self.get_screen("menu").screen_add(self.show_player_stats())
-        self.get_screen("menu").screen_add(self.show_player_items())
+        self.game.get_screen("menu").screen_add(self.game.show_player_stats())
+        self.game.get_screen("menu").screen_add(self.game.show_player_items())
 
 
 if __name__ == "__main__":
