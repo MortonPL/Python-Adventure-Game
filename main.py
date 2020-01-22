@@ -1,5 +1,8 @@
 '''
     THIS IS THE MAIN GAME FILE
+    LATEST UPDATE: 21/01/20
+    LATEST VERSION: GAME_C
+
 '''
 import os
 import sys
@@ -7,33 +10,29 @@ import json
 import random
 
 
-system = {
-    "List of Calls":
-    {
-        "MENU_LOAD":
-        {
-            "Text": "Available save files:\n\n",
-            "Question": "Choose the save file you want to load. ",
-            "Any_key": False
-        },
-        "MENU_SCENARIO":
-        {
-            "Question": "Choose the scenario you want to play. ",
-            "Any_key": False
-        }
-    }
-}
-
-
 class GameData:
+    """Contains data needed by the game, has no methods of its own. In order
+    to have other classes use it, pass the instance as argument during the
+    initialization."""
     def __init__(self):
-        # This is the major data object
-        self.path = None
+        self.path = sys.path[0]
         self.platform = None
-        self.dict_of_screens = {}
+        self.dict_of_screens = {"player": Screen(),
+                                "menu": Screen(),
+                                "location": Screen(),
+                                "command": Screen()}
         self.rollback = None
         self.rollback_args = ()
-        self.sys_call_types = {}
+        self.sys_call_types = {
+            "MENU_LOAD":
+            {
+                "Text": "Available save files:\n\n",
+                "Question": "Choose the save file you want to load. ",
+                "Any_key": False},
+            "MENU_SCENARIO":
+            {
+                "Question": "Choose the scenario you want to play. ",
+                "Any_key": False}}
         self.call_types = {}
         self.location_types = {}
         self.list_of_menus = []
@@ -49,7 +48,7 @@ class GameData:
                           "COM": 1, "SOC": 1, "LUC": 1},
             "Location": "",
             "Items": {}}
-        self.version = "Game_A"
+        self.version = "Game_C"
         self.mapfile = None
         self.time = 0
         self.time_limit = 0
@@ -58,29 +57,42 @@ class GameData:
 
 
 class Screen:
+    """Class representing an independent screen - part of the console window.
+
+    Variables:
+
+    ``active`` (bool): If False, stops screen from showing its content.
+
+    ``frozen`` (bool): If True, stops screen from removing temporary strings.
+    Otherwise, temporary strings are removed from screen after being shown in
+    console."""
 
     def __init__(self):
         self.active = False
         self.frozen = False
         self.strlist = []
 
-    def screen_add(self, string, temporary=False,
+    def screen_add(self, string: str, temporary=False,
                    exclusive=False):
+        """Adds (but not shows!) given ``string`` to screen's ``strlist``.
+
+        If ``temporary`` is True, add the ``string`` as temporary.
+
+        If ``exclusive`` is True, ``string`` is not added when it already
+        exists."""
         if not exclusive or (string not in self.strlist and exclusive):
             self.strlist.append((string, temporary))
 
-    def screen_get_index(self, string):
-        for index, line in enumerate(self.strlist):
-            if line == string:
-                return index
-
-    def screen_replace(self, string, index):
-        self.strlist[index] = string
-
     def screen_reset(self):
+        """Empties screen ``strlist``."""
         self.strlist.clear()
 
     def screen_show(self):
+        """If screen is active, prints a dividing line and every string in
+        own ``strlist`` in the console window and removes the temporary
+        strings.
+
+        If screen is frozen, temporary strings are not removed."""
         if self.active:
             new_strlist = []
             print(f"\n||========================================"
@@ -93,6 +105,7 @@ class Screen:
             self.strlist = new_strlist
 
     def screen_clear(self):
+        """Clears the console window."""
         if sys.platform == "win32":
             os.system("cls")
         elif sys.platform == "linux":
@@ -100,6 +113,8 @@ class Screen:
 
 
 class ReaderJSON:
+    """A simple JSON wrapper that loads JSON file content to ``json_file``
+    and sets ``json_load_ok`` if JSON file is correct."""
     def __init__(self, path):
         with open(os.path.join(sys.path[0], path), "r") as file:
             try:
@@ -111,13 +126,15 @@ class ReaderJSON:
 
 class Game:
 
-    def __init__(self, data_object):
+    def __init__(self, data_object: GameData):
         self.data = data_object
-        self.data.platform = sys.platform
 
 # Parsing functions:
 
-    def parse_from_json(self, json, overlap):
+    def parse_from_json(self, json: ReaderJSON, overlap: str):
+        """Loads relevant data from given JSON file into ``GameData instance``
+
+        Set ``overlap`` to True if you're loading a save file."""
         self.data.location_types = json["List of Locations"]
         if not overlap:
             self.data.item_types = json["List of Items"]
@@ -132,6 +149,8 @@ class Game:
             self.data.time = json["Time"]
 
     def dump_to_json(self):
+        """Returns a ``dict`` containing all the data that's being put in a save file.
+        """
         save_data = {
             "Version": self.data.version,
             "Name": self.data.mapfile,
@@ -143,32 +162,47 @@ class Game:
 
 # Screen functions:
 
-    def get_screen(self, key):
+    def get_screen(self, key: str):
+        """Returns a ``Screen`` object with corresponding ``key``."""
         return self.data.dict_of_screens[key]
 
     def refresh_screens(self):
+        """Clears the console window and shows content of every ``Screen``
+        object."""
         self.get_screen("command").screen_clear()
         for screen in self.data.dict_of_screens:
             self.get_screen(screen).screen_show()
 
-    def activate_screen(self, key):
+    def activate_screen(self, key: str):
+        """Sets the ``Screen`` object with the corresponding ``key`` to active
+        state."""
         self.get_screen(key).active = True
 
-    def deactivate_screen(self, key):
+    def deactivate_screen(self, key: str):
+        """Sets the ``Screen`` object with the corresponding ``key`` to inactive
+        state."""
         self.get_screen(key).active = False
 
-    def freeze_screen(self, key):
+    def freeze_screen(self, key: str):
+        """Sets the ``Screen`` object with the corresponding ``key`` to unfrozen
+        state."""
         self.get_screen(key).frozen = True
 
-    def unfreeze_screen(self, key):
+    def unfreeze_screen(self, key: str):
+        """Sets the ``Screen`` object with the corresponding ``key`` to frozen
+        state."""
         self.get_screen(key).frozen = False
 
     def update_screens(self):
+        """Updates the "player" and "location" ``Screen`` objects in order to contain
+        most recent data and refreshes the console."""
         self.update_location_screen()
         self.update_player_screen()
         self.refresh_screens()
 
     def update_location_screen(self):
+        """Updates "location" ``Screen`` informations about location
+        description, items, paths to other locations and current events."""
         self.get_screen("location").screen_reset()
         location = self.clocation()[1]
         if location["is_new"]:
@@ -203,19 +237,26 @@ class Game:
             self.get_screen("location").screen_add(self.random_text("Danger"))
 
     def update_player_screen(self):
+        """Updates "player" ``Screen`` informations about current time,
+        statistics and carried items."""
         self.get_screen("player").screen_reset()
         timer_str = f"You have {self.data.time_limit - self.data.time} turns."
         self.get_screen("player").screen_add(self.show_player_stats())
         self.get_screen("player").screen_add(self.show_player_items())
         self.get_screen("player").screen_add(timer_str)
 
-# COMMAND PROMPT (CP) methods:
+# Command Interpreter (CI) methods:
 
-    def cp_update_rollback(self, function, *args):
+    def ci_update_rollback(self, function, *args):
+        """Sets the function to roll back to if player doesn't confirm
+        quitting or cancels saving."""
         self.data.rollback = function
         self.data.rollback_args = args
 
     def exit(self, *args):
+        """Asks player for confirmation. If the response is 'QUIT', close the
+        game. Else returns rollback function with its arguments to the main
+        loop."""
         confirm = input(
             "\nAre you sure about that? (Type in QUIT to confirm) ")
         if confirm.lower() == "quit":
@@ -226,6 +267,10 @@ class Game:
             return self.data.rollback(*self.data.rollback_args)
 
     def save(self, *args):
+        """Asks player for save file name. If the name is vaild and user
+        doesn't cancel, dumps selected data to a new save file. If the name is
+        invalid, asks for another name. If user cancels, returns rollback
+        function with its arguments to the main loop."""
         confirm = input("\nType in the name of your save state."
                         "(Type in CANCEL to cancel) ")
         if confirm.lower() == "cancel":
@@ -243,11 +288,15 @@ class Game:
                 self.save()
 
     def check_health(self):
+        """Sets the fail flag to True if player's HP is below or equal to 0 and informs
+        player about it."""
         if self.data.player["Stats"]["HP"] <= 0:
             print("You have died and thus failed the mission. GAME OVER")
             self.data.fail = True
 
     def timer_tick(self):
+        """Decreases the time counter. Sets the fail flag to True and informs
+        player about it."""
         if self.data.time < self.data.time_limit:
             self.data.time += 1
         else:
@@ -255,15 +304,23 @@ class Game:
                   "thus failed the mission. GAME OVER")
             self.data.fail = True
 
-    def cp_invalid_input(self, call, string="Please choose a valid option."):
+    def ci_invalid_input(self, call: str,
+                         string="Please choose a valid option."):
+        """Informs player that given input is invalid and repeats the
+        ``call``."""
         self.get_screen("command").screen_add(string, True, True)
         self.refresh_screens()
-        return self.cp_call_user(call)
+        return self.ci_call_user(call)
 
-    def cp_question(self, question=""):
+    def ci_question(self, question=""):
+        """Asks for player input while showing ``question``. Returns a tuple
+        of answers separated by ': '."""
         return input(question).lower().split(": ")
 
-    def cp_call_check(self, call):
+    def ci_call_check(self, call: str):
+        """Checks if the given ``call`` call key is in dictionary of hardcoded calls
+        or loaded mapfile calls. If it's true, returns lower-case content of
+        the call. If it's false, informs the player and stops the game."""
         loaded_call = None
         try:
             if call in self.data.sys_call_types:
@@ -272,35 +329,45 @@ class Game:
                 loaded_call = self.data.call_types[call]
             else:
                 raise Exception
+            return dict(
+                (key.lower(), value) for (key, value) in loaded_call.items())
         except Exception:
-            sys.exit(f"Something went wrong, call {call} does not exist.")
-        return dict(
-            (key.lower(), value) for (key, value) in loaded_call.items())
+            input(f"Call {call} seems to be corrupted. Press enter to quit.")
+            sys.exit()
 
-    def cp_call_user(self, call, loaded_call=None):
-        self.cp_update_rollback(self.cp_call_user, call)
+    def ci_call_user(self, call: str, loaded_call=None):
+        """This is the main function that interprets player input.
+        First, it checks if the failure condition is met and ends the game if
+        it's true. Then it looks up for a call to execute with the ``call``
+        key and asks for player input. If player's answer is defined in the
+        call dictionary, returns the corresponding function with its arguments
+        to the main loop. Otherwise informs the player and asks for input
+        again."""
         self.check_health()
         if self.data.fail and not self.data.already_failed:
-            return self.menu_loose_game()
+            return self.menu_end_game("FAILURE")
 
         if loaded_call is None:
-            loaded_call = self.cp_call_check(call)
+            loaded_call = self.ci_call_check(call)
         try:
-            answer = self.cp_question(loaded_call["question"])
+            answer = self.ci_question(loaded_call["question"])
         except Exception:
-            sys.exit(f"Something went wrong, call {call} or its' part"
-                     " does not exist.")
+            return self.data.rollback(*self.data.rollback_args)
         valid_answer = False
+        self.ci_update_rollback(self.ci_call_user, call)
         if answer == ["quit"]:
-            valid_answer = True
-            return self.exit()
+            if call in {"MENU_SCENARIO", "MENU_VICTORY", "MENU_LOST"}:
+                exit()
+            else:
+                valid_answer = True
+                return self.exit()
         elif answer == ["save"]:
             if call not in {"MENU_SCENARIO", "MENU_MAIN", "MENU_INTRO",
                             "MENU_CHARACTER", "ENDING"}:
                 valid_answer = True
                 return self.save()
             else:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     call, "You cannot save here.\n")
         elif loaded_call["any_key"]:
             valid_answer = True
@@ -316,58 +383,81 @@ class Game:
                                          *answer[1:])
                     return action, action_attributes
         if not valid_answer:
+            if call == "MENU_SCENARIO":
+                return self.ci_invalid_input(call, "Invalid Command.\n")
             if call == "DANGER":
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     call, self.random_text("Invalid Danger Command"))
             elif call == "GENERIC":
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     call, self.random_text("Invalid Command"))
             else:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     call, self.random_text("Invalid Command"))
 
-# Starting the program
+# Starting the game:
 
     def start(self):
+        """First function executed by the game, starts in the
+        MENU_SCENARIO state."""
         self.activate_screen("command")
         Menu(self, "MENU_SCENARIO")
-        return self.cp_call_user("MENU_SCENARIO")
+        return self.ci_call_user("MENU_SCENARIO")
 
-    def keep_going(self, func_tuple):
-        func, func_attribs = func_tuple
-        return func(*func_attribs)
+    def keep_going(self, func_tuple: tuple):
+        """Main game loop:
 
-# Menu methods called by the CP
+        Executes ``ci_call_user``, returns new ``func_tuple``,
+
+        Executes function from ``func_tuple``, returns ci_call_user params."""
+        while True:
+            function, function_attributes = func_tuple
+            func_tuple = function(*function_attributes)
+
+# Menu methods called by the CI:
 
     def menu_new_game(self, *args):
+        """Goes to "MENU_INTRO" state that shows mapfile description."""
         Menu(self, "MENU_INTRO")
-        return self.cp_call_user("MENU_INTRO")
+        return self.ci_call_user("MENU_INTRO")
 
     def menu_load_game(self, *args):
+        """Goes to "MENU_LOAD" state that lets player choose the save file
+        to load."""
         Menu(self, "MENU_LOAD")
-        return self.cp_call_user("MENU_LOAD")
+        return self.ci_call_user("MENU_LOAD")
 
-    def menu_save_chosen(self, savefile, *args):
+    def menu_save_chosen(self, savefile: str, *args):
+        """Goes to an inbetween state that loads save file data
+        and resumes the adventure."""
         self.parse_from_json(ReaderJSON(savefile).json_file, overlap=True)
         return self.begin_adventure(state="loaded")
 
-    def menu_scenario_chosen(self, scenario, *args):
+    def menu_scenario_chosen(self, scenario: str, *args):
+        """Loads mapfile content and goes to "MENU_MAIN" state that shows
+        the main menu."""
         self.parse_from_json(ReaderJSON(scenario).json_file, overlap=False)
         Menu(self, "MENU_MAIN")
-        return self.cp_call_user("MENU_MAIN")
+        return self.ci_call_user("MENU_MAIN")
 
     def menu_pick_character(self, *args):
+        """Goes to "MAP_CHARACTER" state that loads playable characters
+        and lets player choose one of them."""
         Menu(self, "MENU_CHARACTER")
-        return self.cp_call_user("MENU_CHARACTER")
+        return self.ci_call_user("MENU_CHARACTER")
 
-    def pick_character(self, character, *args):
+    def pick_character(self, character: str, *args):
+        """Goes to an inbetween state that loads character data
+        and begins the adventure."""
         for entry in self.data.character_types[character]:
             self.data.player[entry] = self.data.character_types[
                 character][entry]
         return self.begin_adventure(state="new")
 
-    def begin_adventure(self, state):
-        self.get_screen("menu").screen_reset()
+    def begin_adventure(self, state: str):
+        """Begins the playable segment of the game: activates "location"
+        and "player" screens and puts player in the starting/loaded location,
+        depending on the given ``state``."""
         self.activate_screen("location")
         self.activate_screen("player")
         self.deactivate_screen("menu")
@@ -378,22 +468,26 @@ class Game:
         elif state == "loaded":
             return self.appear(self.data.player["Location"], "LD_START")
 
-    def menu_win_game(self):
+    def menu_end_game(self, result: str):
+        """Depending on the ``result``, goes to either "MENU_VICTORY" or
+        "MENU_LOST" state that shows the final outcome and allows to quit."""
         self.deactivate_screen("location")
         self.deactivate_screen("player")
-        Menu(self, "MENU_VICTORY")
-        return self.cp_call_user("MENU_VICTORY")
+        if result == "VICTORY":
+            Menu(self, "MENU_VICTORY")
+            return self.ci_call_user("MENU_VICTORY")
+        elif result == "FAILURE":
+            Menu(self, "MENU_LOST")
+            self.data.already_failed = True
+            return self.ci_call_user("MENU_LOST")
 
-    def menu_loose_game(self):
-        self.deactivate_screen("location")
-        self.deactivate_screen("player")
-        Menu(self, "MENU_LOST")
-        self.data.already_failed = True
-        return self.cp_call_user("MENU_LOST")
-
-# Generic methods called by the CP
+# Generic methods called by the CI:
 
     def search_location(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        Makes player increase search level for current location if it's
+        less than 3 and gives search rewards if there are any."""
         location = self.clocation()[1]
         try:
             # spend some time
@@ -424,23 +518,27 @@ class Game:
                     self.random_text("Search Max"),
                     True)
             self.update_screens()
-            return self.cp_call_user("GENERIC")
+            return self.ci_call_user("GENERIC")
         except KeyError as ex:
             if ex.args[0] in {'1', '2', '3'}:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", f"MISSING SEARCH REWARDS "
                     f"FOR LEVEL {ex.args[0]}!")
 
     def go_to(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        Changes player location to given location if it exists
+        and there's a path to it."""
         found_it = False
         for location_id, location in self.data.location_types.items():
             if "Name" in location.keys():
                 if location["Name"].lower() == args[0]:
                     if location_id == self.clocation()[0]:
-                        return self.cp_invalid_input(
+                        return self.ci_invalid_input(
                             "GENERIC", self.random_text("Already Here"))
                     elif not self.check_path(location_id):
-                        return self.cp_invalid_input(
+                        return self.ci_invalid_input(
                             "GENERIC", self.random_text("Missing Path"))
                     else:
                         previous_location_id = self.clocation()[0]
@@ -448,18 +546,26 @@ class Game:
                         self.timer_tick()
                         return self.arrive(location_id, previous_location_id)
         if not found_it:
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 "GENERIC", self.random_text("Imaginary Path"))
 
     def take_item(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        If answer is take: item;
+        Picks up the given item and puts it in player's backpack if the item
+        exists and is in the current location.
+
+        If answer is take: all;
+        Picks up all existing items in the current location."""
         location = self.clocation()[1]
         if "List of Items" not in location.keys():
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 "GENERIC", "There is nothing to take.")
         found_it = False
         if args[0] == "all":
             if len(location["List of Items"]) == 0:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", "There is nothing to take.")
             found_it = True
             for item_id in location["List of Items"]:
@@ -472,7 +578,7 @@ class Game:
             for item_id in self.data.item_types:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
                     if item_id not in location["List of Items"]:
-                        return self.cp_invalid_input(
+                        return self.ci_invalid_input(
                             "GENERIC", "There is nothing like that here.")
                     else:
                         found_it = True
@@ -484,23 +590,32 @@ class Game:
                         self.update_screens()
                         break
         if not found_it:
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 "GENERIC", self.random_text("Imaginary Item"))
-        return self.cp_call_user("GENERIC")
+        return self.ci_call_user("GENERIC")
 
     def drop_item(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        If answer is drop: item;
+        Drops down the given item in the current location and removes it from
+        player's backpack if the item exists, is not a key item and is in the
+        backpack.
+
+        If answer is drop: all;
+        Drops down all carried non-key items in the current location."""
         found_it = False
         if args[0] == "all":
             if sum(self.data.player["Items"].values()) == 0:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", "You don't have anything to drop.")
             else:
                 found_it = True
                 for item_id, item_count in self.data.player["Items"].items():
                     for item in range(item_count):
-                        self.drop_it(item_id)
+                        self.drop_it(item_id, destroy=False, drop_all=True)
                 self.get_screen("command").screen_add(
-                    "You dropped every item you had.", True)
+                    "You dropped every item you could.", True)
                 self.clean_backpack()
                 self.update_screens()
         else:
@@ -508,26 +623,31 @@ class Game:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
                     if item_id not in self.data.player["Items"] \
                             or self.data.player["Items"][item_id] == 0:
-                        return self.cp_invalid_input(
+                        return self.ci_invalid_input(
                             "GENERIC", self.random_text("Missing Item"))
                     else:
                         found_it = True
-                        self.drop_it(item_id)
-                        self.get_screen("command").screen_add(
-                            f"You dropped {self.get_item(item_id)['Name']}.",
-                            True, True)
+                        self.drop_it(item_id, destroy=False, drop_all=False)
                         self.clean_backpack()
                         self.update_screens()
         if not found_it:
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 "GENERIC", self.random_text("Imaginary Item"))
-        return self.cp_call_user("GENERIC")
+        return self.ci_call_user("GENERIC")
 
     def use_item(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        If answer is use: item;
+        Uses given item if it exists, is not a key item, is in player's
+        backpack and player meets the item prerequisites.
+
+        If answer is use: all;
+        Uses every possible non-key item."""
         found_it = False
         if args[0] == "all":
             if sum(self.data.player["Items"].values()) == 0:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", "You don't have anything to use.")
             else:
                 found_it = True
@@ -541,31 +661,31 @@ class Game:
         else:
             if self.get_item_from_name(args[0])\
                     not in self.data.player["Items"]:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", self.random_text("Missing Item"))
             for item_id in self.data.player["Items"]:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
                     if self.data.player["Items"][item_id] == 0:
-                        return self.cp_invalid_input(
+                        return self.ci_invalid_input(
                             "GENERIC", self.random_text("Missing Item"))
                     else:
                         found_it = True
                         self.use_it(item_id=item_id)
-                        self.get_screen("command").screen_add(
-                            f"You used {self.get_item(item_id)['Name']}. "
-                            f"{self.get_item(item_id)['Action Description']}",
-                            True)
                         self.clean_backpack()
                         self.update_screens()
         if not found_it:
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 "GENERIC", self.random_text("Imaginary Item"))
-        return self.cp_call_user("GENERIC")
+        return self.ci_call_user("GENERIC")
 
     def examine(self, *args):
-        return self.cp_call_user("GENERIC")
+        """ TODO """
+        return self.ci_call_user("GENERIC")
 
     def do_event(self, *args):
+        """GENERIC GAMEPLAY FUNCTION
+
+        Chooses one of the event options if the requirements are met."""
         location = self.clocation()[1]
         success = False
         try:
@@ -574,7 +694,7 @@ class Game:
                     choice_index > len(location["List of Events"]) - 1:
                 raise ValueError
         except (TypeError, ValueError):
-            return self.cp_invalid_input(
+            return self.ci_invalid_input(
                 args[1], self.random_text("Invalid Command"))
 
         event = location["List of Events"][choice_index]
@@ -582,10 +702,10 @@ class Game:
         if event["Type"] == "Payment":
             if self.check_item_cost(event["Requirements"]):
                 for item in event["Requirements"]:
-                    self.drop_it(item, True)
+                    self.drop_it(item, drop_all=True, destroy=True)
                     success = True
             else:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     args[0], "You don't have enough items!")
         elif event["Type"] == "Choice":
             success = True
@@ -593,7 +713,7 @@ class Game:
             if self.check_stat_cost(event["Requirements"]):
                 success = True
             else:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     args[0], self.random_text("Low Stat"))
         if success:
             self.get_screen("command").screen_add(event["Thank Text"], True)
@@ -602,11 +722,13 @@ class Game:
             location.pop("Event Description")
             location.pop("Dangerous Event", None)
         self.update_screens()
-        return self.cp_call_user("GENERIC")
+        return self.ci_call_user("GENERIC")
 
 # Functions for player:
 
-    def check_stat_cost(self, requirement_list):
+    def check_stat_cost(self, requirement_list: list):
+        """Checks if player has high enough statistics to choose an event option.
+        """
         logical_carry = True
         for min_value, value in zip(requirement_list,
                                     self.data.player["Stats"].values()):
@@ -617,6 +739,8 @@ class Game:
         return True
 
     def show_player_stats(self):
+        """Returns a string containing information about player's statistics.
+        """
         player = self.data.player
         stats_str = "You have "
         i = 0
@@ -633,6 +757,7 @@ class Game:
         return stats_str
 
     def show_player_items(self):
+        """Returns a string containing information about player's items."""
         player = self.data.player
         items_str = "You have "
         if len(player["Items"]) == 0:
@@ -651,13 +776,19 @@ class Game:
 # Functions for locations:
 
     def clocation(self):
+        """Returns a tuple containing current location key and data (dict)."""
         return (self.data.player["Location"],
                 self.data.location_types[self.data.player["Location"]])
 
-    def get_location(self, location_id):
+    def get_location(self, location_id: str):
+        """Returns all data (dict) of the location with given ``location_id``.
+        """
         return self.data.location_types[location_id]
 
-    def check_path(self, location_id):
+    def check_path(self, location_id: str):
+        """"Returns ``True`` if the current location contains a path to given
+        location. If there is no path or no "List of Paths" entry in the
+        current location, returns ``False``."""
         if "List of Paths" not in self.clocation()[1].keys():
             return False
         for path in self.clocation()[1]["List of Paths"]:
@@ -665,11 +796,23 @@ class Game:
                 return True
         return False
 
-    def appear(self, location_id, previous_location_id):
+    def appear(self, location_id: str, previous_location_id: str):
+        """Magically teleports player to the location with ``location_id`` key
+        and sets the previous location to given ``previous_location_id``.
+        If no ``previous_location_id`` is given, defaults to "LD_START"."""
         self.data.player["Location"] = location_id
         return self.arrive(location_id, previous_location_id)
 
-    def arrive(self, location_id, previous_location_id):
+    def arrive(self, location_id: str, previous_location_id: str):
+        """Moves player to the location with ``location_id`` key and marks
+        the location with ``previous_location_id`` as already explored.
+
+        If the location is the game objective, makes "ENDING" call that
+        finishes the adventure.
+
+        If the location is dangerous, makes "DANGER" call instead of "GENERIC"
+        call that forces the player to finish the event before doing anything
+        else."""
         location = self.get_location(location_id)
         previous_location = self.get_location(previous_location_id)
         if "is_new" not in location:
@@ -678,14 +821,17 @@ class Game:
         if previous_location["is_new"]:
             previous_location["is_new"] = False
         if "is_win" in location and location["is_win"]:
-            return self.cp_call_user("ENDING")
+            return self.ci_call_user("ENDING")
         elif "Dangerous Event" not in location\
                 or not location["Dangerous Event"]:
-            return self.cp_call_user("GENERIC")
+            return self.ci_call_user("GENERIC")
         else:
-            return self.cp_call_user("DANGER")
+            return self.ci_call_user("DANGER")
 
     def show_items(self):
+        """Returns a string containing information about current location
+        items. If the "List of Items" entry is missing,
+        returns ``"MISSING ITEMS ENTRY!"``."""
         location = self.clocation()[1]
         item_str = ""
         try:
@@ -711,6 +857,9 @@ class Game:
             return item_str
 
     def show_paths(self):
+        """Returns a string containing information about current location
+        paths. If the "List of Paths" entry is missing,
+        returns ``"MISSING PATHS ENTRY!"``."""
         path_str = ""
         location = self.clocation()[1]
         if "List of Paths" not in location.keys():
@@ -734,6 +883,10 @@ class Game:
         return path_str
 
     def show_events(self):
+        """Returns a string containing information about current location
+        event. If the "List of Events" entry is missing,
+        returns ``"MISSING EVENTS ENTRY!"``.
+        If the "List of Events" entry is empty, returns empty string."""
         event_str = ""
         location = self.clocation()[1]
         try:
@@ -747,7 +900,16 @@ class Game:
 
 # Functions for items:
 
-    def give_rewards(self, reward_list, source):
+    def give_rewards(self, reward_list: list, source: str):
+        """Gives all rewards in ``reward_list``.
+
+        If the reward is a location,
+        creates a new path to this location from the current one.
+
+        If the reward is an item, gives this item to player.
+
+        If the reward is statistics change (a dictionary), creates a fake
+        StatUp Consumable item and uses it on player."""
         location = self.clocation()[1]
         for reward in reward_list:
             if type(reward) is dict:
@@ -774,56 +936,118 @@ class Game:
                     f"{self.get_item(reward)['Name']}!", True)
 
     def clean_backpack(self):
+        """Removes all items (keys) with the value of 0 from player's backpack.
+        """
         new_dict = {}
         for item_id, item_count in self.data.player["Items"].items():
             if item_count != 0:
                 new_dict[item_id] = item_count
         self.data.player["Items"] = new_dict
 
-    def get_item(self, item_id):
+    def get_item(self, item_id: str):
+        """Returns data (dict) of the item with corresponding ``item_id``."""
         return self.data.item_types[item_id]
 
-    def get_item_from_name(self, item_name):
+    def get_item_from_name(self, item_name: str):
+        """Returns item key of the item with given ``item_name``."""
         for item_id, item in self.data.item_types.items():
             if item["Name"].lower() == item_name:
                 return item_id
 
     def use_it(self, item_id=None, use_all=False, item=None):
+        """Applies item effect if the requirements are met.
+        ``item_id`` is used when this function is executed by "use" command.
+        ``item`` is used when a fake item (not in "List of Items") is created
+        and used.
+        ``use_all`` is used when this function is executed by "use: all"
+        command and supresses notifications about max stats.
+
+        ``Consumable``-type items disappear after being used.
+
+        ``Key``-type items cannot be used or dropped.
+
+        ``StatUp`` action increases/decreases player statistics by
+        certain value if the statistics are not at player's maximum.
+
+        ``Restore`` action sets player statistics to maximum.
+
+        ``Grow`` action increases/decreases player statistics by certain value.
+        """
         player = self.data.player
+        applied = False
         if item is None:
             item = self.get_item(item_id)
-        if item is not None or self.check_item_prereq(item_id):
-            if item["Type"] == "Consumable"\
-                    and item["Action"][0] == "StatUp":
+        if self.check_item_prereq(item_id):
+            if item["Type"] == "Consumable":
 
-                for stat, stat_value in item["Action"][1].items():
+                if item["Action"][0] == "StatUp":
 
-                    if player["Stats"][stat] == player["Max Stats"][stat]\
-                            and stat_value >= 0:
+                    for stat, stat_value in item["Action"][1].items():
+                        if player["Stats"][stat] == player["Max Stats"][stat]\
+                                and stat_value > 0:
+                            pass
+                        elif stat_value + player["Stats"][stat] >\
+                                player["Max Stats"][stat]:
+                            player["Stats"][stat] = player["Max Stats"][stat]
+                            applied = True
+                        else:
+                            player["Stats"][stat] += stat_value
+                            if player["Stats"][stat] < 0:
+                                player["Stats"][stat] = 0
+                            applied = True
 
-                        if not use_all or item is not None:
-                            return self.cp_invalid_input(
-                                "GENERIC", self.random_text("Max Stat"))
+                    if applied:
+                        if item_id is not None:
+                            self.consume_item(item_id)
+                    else:
+                        if use_all or item_id is None:
+                            pass
+                        else:
+                            self.get_screen("command").screen_add(
+                                self.random_text("Max Stat"), True)
 
-                    elif stat_value + player["Stats"][stat] >\
-                            player["Max Stats"][stat]:
+                if item["Action"][0] == "Restore":
+                    for stat in item["Action"][1]:
+                        if player["Stats"][stat] != player["Max Stats"][stat]:
+                            player["Stats"][stat] = player["Max Stats"][stat]
+                            applied = True
+                    if applied:
+                        if item_id is not None:
+                            self.consume_item(item_id)
+                    else:
+                        if use_all or item_id is None:
+                            pass
+                        else:
+                            self.get_screen("command").screen_add(
+                                self.random_text("Max Stat"), True)
 
-                        player["Stats"][stat] = player["Max Stats"][stat]
+                if item["Action"][0] == "Grow":
+                    for stat, stat_value in item["Action"][1].items():
+                        player["Max Stats"][stat] += stat_value
+                        player["Stats"][stat] += stat_value
+                        if item_id is not None:
+                            self.consume_item(item_id)
 
-                    if item is None:
-                        player["Items"][item_id] -= 1
-
-                else:
-                    player["Stats"][stat] += stat_value
-                    if item is None:
-                        player["Items"][item_id] -= 1
+            if item["Type"][0] == "Key":
+                self.get_screen("command").screen_add(
+                    self.random_text("Lock Key"))
 
         else:
             if not use_all:
-                return self.cp_invalid_input(
+                return self.ci_invalid_input(
                     "GENERIC", self.random_text("Low Stat"))
 
-    def check_item_prereq(self, item_id):
+    def consume_item(self, item_id: str):
+        """Called by ``use_it``, removes the item from player's backpack
+        and informs the player about it."""
+        self.data.player["Items"][item_id] -= 1
+        name = self.get_item(item_id)['Name']
+        desc = self.get_item(item_id)['Action Description']
+        self.get_screen("command").screen_add(
+            f"You used {name}. {desc}", True)
+
+    def check_item_prereq(self, item_id: str):
+        """Checks if player meets the item requirements."""
         item = self.get_item(item_id)
         logical_carry = True
         for min_value, value in zip(
@@ -835,17 +1059,33 @@ class Game:
                 return False
         return True
 
-    def take_it(self, item_id):
+    def take_it(self, item_id: str):
+        """Called by ``take_item``, removes the given item from location
+        and adds it to player's backpack."""
         if item_id not in self.data.player["Items"]:
             self.data.player["Items"][item_id] = 0
         self.data.player["Items"][item_id] += 1
 
-    def drop_it(self, item_id, destroy=False):
-        self.data.player["Items"][item_id] -= 1
-        if not destroy:
+    def drop_it(self, item_id: str, destroy: bool, drop_all: bool):
+        """Called by ``drop_item``, removes the given item from player's backpack if
+        it's a non-key item. If ``destroy`` is false, the item appears in the
+        current location. If ``drop_all`` is true, doesn't notify the player
+        about the fact."""
+        if destroy:
+            self.data.player["Items"][item_id] -= 1
+        elif self.get_item(item_id)["Type"] == "Key":
+            if not drop_all:
+                self.get_screen("command").screen_add(
+                    self.random_text("Lock Key"), True)
+        else:
+            self.data.player["Items"][item_id] -= 1
             self.clocation()[1]["List of Items"].append(item_id)
+            self.get_screen("command").screen_add(
+                f"You dropped {self.get_item(item_id)['Name']}.", True, True)
 
-    def check_item_cost(self, requirement_list):
+    def check_item_cost(self, requirement_list: list):
+        """Returns True if player has enough items requested by the
+        ``requirement_list``."""
         total_cost = {}
         logical_carry = True
         for item_id in requirement_list:
@@ -864,9 +1104,12 @@ class Game:
 
 # Functions for examination:
 
+# TODO
+
 # Text randomness:
 
     def random_text(self, key):
+        """Returns a random string from string group with the given ``key``."""
         return random.choice(self.data.text_variation[key])
 
 
@@ -879,13 +1122,15 @@ class Menu:
         self.start()
 
     def start(self):
+        """Shows content of the menu state."""
         self.game.activate_screen("menu")
         self.game.get_screen("menu").screen_clear()
         self.read_menu()
 
     def read_menu(self):
+        """Gets text to show from the corresponding call type."""
         self.game.get_screen("menu").screen_reset()
-        call = self.game.cp_call_check(self.call_key)
+        call = self.game.ci_call_check(self.call_key)
 
         if "text" in call:
             self.game.get_screen("menu").screen_add(call["text"])
@@ -905,11 +1150,16 @@ class Menu:
         self.game.refresh_screens()
 
     def write_characters(self):
+        """Add to "menu" screen playable character descriptions."""
         for each in self.data.character_types:
             self.game.get_screen("menu").screen_add(
                 self.data.character_types[each]["Menu Description"])
 
-    def read_directory(self, read_type="map"):
+    def read_directory(self, read_type: str):
+        """Searches the game directory for valid JSON files and returns
+        a list of their file names and/or map names. If ``read_type`` is "map",
+        searches for files with ``map_`` prefix, if ``read_type`` is "save",
+        searches for files with ``save_`` prefix."""
         scenarios = []
         prefix = f"{read_type}_"
         folder = list(filter(
@@ -944,7 +1194,10 @@ class Menu:
                     "\nNo valid save files detected. Type 'quit' to exit.")
         return scenarios
 
-    def add_scenarios_as_answers(self, scenarios, add_type="map"):
+    def add_scenarios_as_answers(self, scenarios: list, add_type: str):
+        """Adds files from ``scenarios`` list as option for the CI. If ``add_type``
+        is "map", adds them to "MENU_SCENARIO" call. If ``add_typ`` is "save",
+        adds them to "MENU_LOAD" call."""
         if add_type == "map":
             call = "MENU_SCENARIO"
             next_function = "menu_scenario_chosen"
@@ -956,6 +1209,7 @@ class Menu:
                 [next_function, entry[0]]
 
     def show_ending_screen(self):
+        """Adds player data: name, items and time, to the ending screen."""
         self.game.get_screen("menu").screen_add(
             f"Your name: {self.data.player['Name']}")
         self.game.get_screen("menu").screen_add(
@@ -966,18 +1220,6 @@ class Menu:
 
 
 if __name__ == "__main__":
-    game_data = GameData()
-    game_data.sys_call_types = system["List of Calls"]
-
-    game_data.path = sys.path[0]
-
-    game = Game(game_data)
-    game_data.dict_of_screens = {"player": Screen(),
-                                 "menu": Screen(),
-                                 "location": Screen(),
-                                 "command": Screen(),
-                                 }
-
+    game = Game(GameData())
     function = game.start()
-    while True:
-        function = (game.keep_going(function))
+    game.keep_going(function)
