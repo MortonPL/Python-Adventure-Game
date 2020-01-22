@@ -375,7 +375,8 @@ class Game:
         elif loaded_call["any_key"]:
             valid_answer = True
             action = getattr(self, loaded_call["any"][0])
-            return action, ()
+            action_attributes = (loaded_call["any"][1:])
+            return action, action_attributes
         else:
             for option in loaded_call:
                 if answer[0] == option and answer[0] not in {
