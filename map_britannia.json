@@ -260,7 +260,9 @@
         },
         "RTE_PATH1":
         {
-            "Name": "Route to North"
+            "Name": "Route to North",
+            "New Description": "This is the end of this demo!",
+            "is_win": true
         }
     },
     "List of Items":
