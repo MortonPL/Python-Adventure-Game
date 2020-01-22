@@ -20,7 +20,7 @@
         },
         "MENU_INTRO":
         {
-            "Text": "Europe was still recovering from the devastation brought by the Great War, when troubling rumours\nof unknown animals appearing on British Isles began to spread. Not so long after, the British found\nthemselves invaded by some kind of intelligent subterranean humanoid creatures. So-called Undermen\ncame through underground tunnels to wage war upon the surface. Even though the decimated Royal Army\ntried to halt the spread of Undermen through the country, it is certain that the current conventional\nmeans are not enough to repel the invaders. To turn the tide of the war, the brightest minds of the Crown\nhave been tasked with creating a super weapon. That is how the Earthquake Bomb was born - a powerful\nexplosive ordnance that would be detonated underground to destroy endless tunnels dug by the Undermen.\n\nYou, a daring soldier of the Crown, have volunteered to take the bomb schematics and safely bring them\nto the Royal Special Weapons Facility, where it will be constructed. You will have to\nmake your way through a war torn country filled with hostile creatures from another world.\n\nIf you succeed, you will be a hero.",
+            "Text": "Europe was still recovering from the devastation brought by the Great War, when troubling rumours\nof unknown animals appearing on British Isles began to spread. Not so long after, the British found\nthemselves invaded by some kind of intelligent subterranean humanoid creatures. So-called Undermen\ncame through underground tunnels to wage war upon the surface. Even though the decimated Royal Army\ntried to halt the spread of Undermen through the country, it is certain that the current conventional\nmeans are not enough to repel the invaders. To turn the tide of the war, the brightest minds of the Crown\nhave been tasked with creating a super weapon. That is how the Earthquake Bomb was born - a powerful\nexplosive ordnance that would be detonated underground to destroy endless tunnels dug by the Undermen.\n\nYou, a daring soldier of the Crown, have volunteered to take the bomb schematics and safely bring them\nto the Royal Special Weapons Facility far in the North, where it will be constructed. You will have to\nmake your way through a war torn country filled with hostile creatures from another world.\n\nTime is limited, but, if you succeed, you will be a hero.",
             "Question": "Press enter to continue. ",
             "Any_key": true,
             "Any": ["menu_pick_character"]
@@ -139,9 +139,9 @@
             "List of Events": [
                 {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
                 {"Type": "Check", "Requirements": [0, 0, 5, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Survival Skill >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "3. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."}
-            ],
-            "is_start": true
+                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "4. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."},
+                {"Type": "Timed", "Requirements": [2], "Rewards": ["BANDG"], "Text": "3. Try to heal him anyway.\n", "Thank Text": "The old man sats 'cool'."}
+            ]
         },
         "L_TESTB":
         {
@@ -169,11 +169,122 @@
             "Search Level": 3,
             "List of Items": [],
             "is_win": true
-
+        },
+        "OXF_UNI1":
+        {
+            "Name": "Outside the University",
+            "New Description": "You exit the university, holding the plans in your hands. R.S.W.F. is somewhere up north. But first, you must\nprepare for your journey and find the town gate.",
+            "Description": "You are back where you started, on the square in front of the university. There is no time to waste!",
+            "List of Paths": ["OXF_UNI2", "OXF_STR1", "OXF_STR2"],
+            "Search Level": 3,
+            "Search Rewards": {},
+            "List of Items": [],
+            "is_start": true
+        },
+        "OXF_UNI2":
+        {
+            "Name": "Inside the University",
+            "New Description": "You enter the university hall. It is filled with young students and elder scientists.",
+            "Description": "You enter the university hall. It is filled with young students and elder scientists.",
+            "Event Description": "An old professor approaches you and asks what is your business here.",
+            "List of Paths": ["OXF_UNI1"],
+            "Search Level": 2,
+            "Search Rewards": {"3": ["BLSTC"]},
+            "List of Items": [],
+            "List of Events": [
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 5, 0], "Rewards": [5], "Text": "1. Explain your mission and ask for help. (Social Skill >=5)\n", "Thank Text": "The professor seems to believe you and gives you a map of local routes."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "2. Make up an excuse and leave.\n", "Thank Text": "The professor leaves you alone."},
+                {"Type": "Timed", "Requirements": [3], "Rewards": [{"KLD": 2}], "Text": "3. Tell him you're here for the lectures.", "Thank Text": "The professor drags you into the class. You lose some time sitting there, but you feel smarter now."}
+                ]
+        },
+        "OXF_STR1":
+        {
+            "Name": "King's Street",
+            "New Description": "You walk down the King's Street, famous for its entertainment.",
+            "Description": "You walk down the King's Street, famous for its entertainment.",
+            "Event Description": "You see a lively pub next to you.",
+            "List of Paths": ["OXF_UNI1", "OXF_STR3"],
+            "Search Level": 3,
+            "Search Rewards": {},
+            "List of Items": [],
+            "List of Events": [
+                {"Type": "Timed", "Requirements": [1], "Rewards": [{"FIT": -1}], "Text": "1. Visit the pub.\n", "Thank Text": "You hoped you'd find some useful information there, but you only got a couple of beers. You don't feel so good."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "2. Ignore it. There's no time for this.", "Thank Text": "You carry on."}
+                ]
+        },
+        "OXF_STR2":
+        {
+            "Name": "Queen's Street",
+            "New Description": "You walk down the Queen's Street.",
+            "Description": "You walk down the Queen's Street.",
+            "Event Description": "You can visit the local market here.",
+            "List of Paths": ["OXF_UNI1", "OXF_STR3"],
+            "Search Level": 1,
+            "Search Rewards": {"3": ["KNIFE"]},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Payment", "Requirements": ["MONEY"], "Rewards": ["HERB"], "Text": "1. Buy some herbs from an old woman. (1* Money)\n", "Thank Text": "You buy medical herbs from an old granny."},
+                {"Type": "Payment", "Requirements": ["MONEY"], "Rewards": ["MATCH", {"LUC": 1}], "Text": "2. Buy some basic supplies from a poor girl. (1* Money)\n", "Thank Text": "The tiny, wounded girl is very happy to sell you a pack of matches.\nThey were expensive, but you think you've done a good deed."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5], "Rewards": ["MONEY"], "Text": "3. Try to steal some money. (Luck >= 5)", "Thank Text": "You get some quick cash and get out."}
+                ]
+        },
+        "OXF_STR3":
+        {
+            "Name": "Main Street",
+            "New Description": "You walk down the main street. The city is lively even in times of war.",
+            "Description": "You walk down the main street. The city is lively even in times of war.",
+            "Event Description": "You see there's a guarded entrance to a beautiful garden.",
+            "List of Paths": ["OXF_STR1", "OXF_STR2", "OXF_GATE"],
+            "Search Level": 2,
+            "Search Rewards": {},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "1. Say that you want to enter the garden.\n", "Thank Text": "After a few minutes of trying to convince the guards, they loose patience and kick you out."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0], "Rewards": ["GAPPLE"], "Text": "2. Say that you're here for the thing. (Social Skill >= 5)\n", "Thank Text": "The guards let you through and give you a package. You decide to keep playing along."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5], "Rewards": [{"LUC": -1}], "Text": "3. Try to disctract the guards. (Luck >= 5)", "Thank Text": "You silently collapse a tower made of barrels and manage to slip past the guards.\nUnfortunately you don't find anything useful. You just wasted your luck."}
+            ]
+        },
+        "OXF_GATE":
+        {
+            "Name": "Town Gate",
+            "New Description": "Finally, you approach the town gate. You can now depart on your adventure.",
+            "Description": "You're back at the town gate.",
+            "Event Description": "You visit the nearby stable. The owner says he can rent you a small horse.",
+            "List of Paths": ["OXF_STR3", "RTE_PATH1"],
+            "Search Level": 1,
+            "Search Rewards": {"2": "LCKHS"},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Payment", "Requirements": ["MOENY", "MONEY"], "Rewards": [3], "Text": "1. Rent a horse from the stable. (2* Money)\n", "Thank Text": "You pay the price and get a brown horse. With a mount, you have more time to spare."},
+                {"Type": "Check", "Requirements": [0, 6, 0, 0, 0, 0], "Rewards": [5], "Text": "2. Impress the owner with your equestrian skills. (Fitness >= 5)", "Thank Text": "The owner is in awe of your horse riding and rents you a white horse. Now you have more time to spare."}            ]
+        },
+        "RTE_PATH1":
+        {
+            "Name": "Route to North"
         }
     },
     "List of Items":
     {
+        "PLANS":
+        {
+            "Name": "Earthquake Bomb Plans",
+            "Article": "",
+            "Description": "Several pages filled with theoretical and technical details.\nYour head hurts just by looking at it.",
+            "Action Description": "",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Key",
+            "Action": []
+        },
+        "MONEY":
+        {
+            "Name": "Money",
+            "Article": "",
+            "Description": "Money, so they say is the root of all evil today.",
+            "Action Description": "",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Key",
+            "Action": []
+        },
         "BANDG":
         {
             "Name": "Bandage",
@@ -183,6 +294,36 @@
             "Prerequisite": [0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"HP": 15}]
+        },
+        "HERB":
+        {
+            "Name": "Herbs",
+            "Article": "",
+            "Description": "A pack of medical herbs. They look healthy.",
+            "Action Description": "You feel a little stronger now.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["StatUp", {"HP": 20, "FIT": 1}]
+        },
+        "KNIFE":
+        {
+            "Name": "Knife",
+            "Article": "a",
+            "Description": "A simple, 6 inch blade. Can open letters and stomaches alike.",
+            "Action Description": "It's always good to have a back-up weapon during combat",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["StatUp", {"COM": 1}]
+        },
+        "LCKHS":
+        {
+            "Name": "Lucky Horseshoe",
+            "Article": "a",
+            "Description": "A horseshoe that is said to bring luck to the wearer.",
+            "Action Description": "You feel this symbol brings you good fortune.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["StatUp", {"LUC": 1}]
         },
         "MDBAG":
         {
@@ -214,15 +355,35 @@
             "Type": "Consumable",
             "Action": ["Grow", {"HP": 40}]
         },
-        "LCKHS":
+        "BLSTC":
         {
-            "Name": "Lucky Horseshoe",
+            "Name": "Book No.1917",
             "Article": "a",
-            "Description": "A horseshoe that is said to bring luck to the wearer.",
-            "Action Description": "You feel this symbol brings you good fortune.",
+            "Description": "The book is called 'Balistics for Conscripts' - A timeless classic written by A. Romanov.",
+            "Action Description": "Fascinating subject - things go up, things go down!",
+            "Prerequisite": [0, 0, 5, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["Grow", {"KLD": 1, "COM": 1}]
+        },
+        "GAPPLE":
+        {
+            "Name": "Golden Apple",
+            "Article": "a",
+            "Description": "The legendary fruit, now in your hands. Eating it must be a good idea.",
+            "Action Description": "It tastes so good you feel it's a sin to eat it.",
             "Prerequisite": [0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["StatUp", {"LUC": 1}]
+            "Action": ["Grow", {"HP": 15, "FIT": 1, "KLD": 1, "SOC": 1, "COM": 1, "LUC": 2}]
+        },
+        "MATCH":
+        {
+            "Name": "Matches",
+            "Article": "",
+            "Description": "A box of matches. Don't burn yourself!",
+            "Action Description": "",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Event",
+            "Action": []
         }
     },
 
@@ -235,7 +396,7 @@
             "You did a regular surface sweep and got the regular result. Nothing.\n",
             "You spent some time to search this place. Not enough, it seems.\n",
             "As you were looking around, you began to wonder if you're any different from a scavenger.\n",
-            "Getting dirty sometimes pays off... Not in this case.\n"
+            "Getting down and dirty sometimes pays off... Not in this case.\n"
         ],
         "Search Success":
         [
@@ -260,7 +421,9 @@
             "Prepare yourself!",
             "Make your prayers.",
             "Is this where the story ends?",
-            "Why do I hear boss music?"
+            "Why do I hear boss music?",
+            "Your senses are tingling.",
+            "You can feel it, coming in the air."
         ],
         "Invalid Command":
         [
@@ -273,7 +436,9 @@
             "You are free to do whatever you want... within limits.",
             "You can't ask for a miracle.",
             "Thinking outside of the box is not welcome.",
-            "Think twice before you say anything."
+            "Think twice before you say anything.",
+            "This is NOT okay.",
+            "You did nothing productive."
         ],
         "Invalid Danger Command":
         [
@@ -308,7 +473,8 @@
             "You cannot go there from here.",
             "There's no way to there.",
             "Not every road leads to Rome.",
-            "And how do you think you're going to do it?"
+            "And how do you think you're going to do it?",
+            "Maybe you should climb a mountain and rethink your choices instead."
         ],
         "Imaginary Path":
         [
@@ -341,7 +507,7 @@
         [
             "There is no such item.",
             "This thing does not exist.",
-            "Quit making things up",
+            "Quit making things up.",
             "Are you losing your mind?"
         ],
         "Empty Backpack":
@@ -357,7 +523,14 @@
             "It's not a very smart thing to do.",
             "Let's not get rid of this, yet.",
             "You think this item is of big importance.",
-            "You feel you will need this in future."
+            "You feel you will need this in future.",
+            "You dropped it, but somehow it's back in your backpack."
+        ],
+        "Not Consumable":
+        [
+            "This is pointless.",
+            "You won't gain anything by doing that.",
+            "It'd be a waste, really."
         ]
     }
 }
