@@ -1,5 +1,5 @@
 {
-    "Version": "Game_A",
+    "Version": "Game_C",
     "Name": "Earthquake in Britannia - Chapter One",
 
     "Time Limit": 30,
@@ -8,7 +8,7 @@
     {
         "MENU_MAIN":
         {
-            "Text": "\t\t- Earthquake in Britannia -\nChapter One: Quest for the Crown\n\n\tThis is the main menu.\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
+            "Text": "\t\t- Earthquake in Britannia -\n\t     Chapter One: Quest for the Crown\n\n\t1. Begin a new game.\n\t2. Load a saved game.\n\t3. Exit.",
             "Question": "What do you do? ",
             "Any_key": false,
             "1": ["menu_new_game"],
@@ -37,23 +37,23 @@
         "MENU_VICTORY":
         {
             "Text": "Congratulations, you have completed your mission! Who knows, maybe you even saved the country!",
-            "Question": "Press enter to end the game. ",
-            "Any_key": true,
-            "Any": ["exit"]
+            "Question": "Type in 'quit' to end the game. ",
+            "Any_key": false,
+            "Quit": ["exit"]
         },
         "MENU_LOST":
         {
             "Text": "You have failed your mission. There is very little hope for the future...",
-            "Question": "Press enter to end the game. ",
-            "Any_key": true,
-            "Any": ["exit"]
+            "Question": "Type in 'quit' to end the game. ",
+            "Any_key": false,
+            "Quit": ["exit"]
         },
         "ENDING":
         {
             "Text": "",
             "Question": "Press enter to become history. ",
             "Any_key": true,
-            "Any": ["menu_win_game"]
+            "Any": ["menu_end_game", "VICTORY"]
         },
         "GENERIC":
         {
@@ -65,8 +65,8 @@
             "Take": ["take_item"],
             "Drop": ["drop_item"],
             "Use": ["use_item"],
-            "Examine": ["examine"],
-            "Choose": ["do_event", "GENERIC"]
+            "Choose": ["do_event", "GENERIC"],
+            "Examine": ["examine"]
         },
         "DANGER":
         {
@@ -81,7 +81,7 @@
     {
         "HP" : "Health",
         "FIT": "Fitness",
-        "SRV": "Survival Skill",
+        "KLD": "Knowledge",
         "COM": "Combat Skill",
         "SOC": "Social Skill",
         "LUC": "Luck"
@@ -92,28 +92,28 @@
         "PBNJM":
         {
             "Name": "Benjamin",
-            "Menu Description": "\tBenjamin, the Hunter\nAll skills average.\n",
-            "Stats": {"HP": 100, "FIT": 5, "SRV": 5,
+            "Menu Description": "\tBenjamin, the Hunter\nAll skills average, but better potential.\n",
+            "Stats": {"HP": 100, "FIT": 5, "KLD": 5,
                       "COM": 4, "SOC": 4, "LUC": 4},
-            "Max Stats": {"HP": 100, "FIT": 8, "SRV": 8,
-                          "COM": 8, "SOC": 8, "LUC": 8}
+            "Max Stats": {"HP": 100, "FIT": 9, "KLD": 9,
+                          "COM": 9, "SOC": 9, "LUC": 9}
         },
         "PKATH":
         {
             "Name": "Kathleen",
-            "Menu Description": "\tKathleen, the Messanger\nGood Luck and Social Skills, bad Combat Ability and Strength.\n",
-            "Stats": {"HP": 70, "FIT": 4, "SRV": 4,
+            "Menu Description": "\tKathleen, the Messenger\nGood Luck and Social Skills, bad Combat Ability and Strength.\n",
+            "Stats": {"HP": 70, "FIT": 4, "KLD": 4,
                       "COM": 2, "SOC": 6, "LUC": 6},
-            "Max Stats": {"HP": 70, "FIT": 7, "SRV": 10,
+            "Max Stats": {"HP": 70, "FIT": 7, "KLD": 10,
                           "COM": 7, "SOC": 10, "LUC": 10}
         },
         "PJASN":
         {
             "Name": "Jason",
-            "Menu Description": "\tJason, the Veteran\nGood Combat Ability, Fitness and Strength, bad Luck and Social Skills.\n",
-            "Stats": {"HP": 150, "FIT": 6, "SRV": 4,
-                      "COM": 6, "SOC": 3, "LUC": 3},
-            "Max Stats": {"HP": 150, "FIT": 10, "SRV": 7,
+            "Menu Description": "\tJason, the Veteran\nGood Combat Ability, Fitness and Strength, bad Knowledge and Social Skills.\n",
+            "Stats": {"HP": 150, "FIT": 6, "KLD": 3,
+                      "COM": 6, "SOC": 3, "LUC": 4},
+            "Max Stats": {"HP": 150, "FIT": 10, "KLD": 7,
                           "COM": 10, "SOC": 7, "LUC": 7}
         }
     },
@@ -135,7 +135,7 @@
             "List of Paths": ["L_TESTB"],
             "Search Level": 0,
             "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": ["LD_START"]},
-            "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS"],
+            "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS", "MDBAG"],
             "List of Events": [
                 {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
                 {"Type": "Check", "Requirements": [0, 0, 5, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Survival Skill >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
@@ -183,6 +183,36 @@
             "Prerequisite": [0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"HP": 15}]
+        },
+        "MDBAG":
+        {
+            "Name": "Doctor's Bag",
+            "Article": "a",
+            "Description": "A bag filled with modern medicine.",
+            "Action Description": "You heal your injuries completely.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["Restore", ["HP"]]
+        },
+        "HELMT":
+        {
+            "Name": "Helmet",
+            "Article": "a",
+            "Description": "A trusty helmet that gives a little bit of protection.",
+            "Action Description": "You are no longer afraid about your head.",
+            "Prerequisite": [0, 4, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["Grow", {"HP": 10}]
+        },
+        "ARMOR":
+        {
+            "Name": "Stormtrooper Uniform",
+            "Article": "a",
+            "Description": "A heavy uniform designed to give wearer signigicant protection.",
+            "Action Description": "You think that will help you survive a bit longer.",
+            "Prerequisite": [0, 6, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["Grow", {"HP": 40}]
         },
         "LCKHS":
         {
@@ -234,24 +264,24 @@
         ],
         "Invalid Command":
         [
-            "No, no, NO.\n",
-            "I'm afraid you can't do that.\n",
-            "Please, just play along.\n",
-            "This is impossible.\n",
-            "Stubborn, aren't we?\n",
-            "This is not an option!\n",
-            "You are free to do whatever you want... within limits.\n",
-            "You can't ask for a miracle.\n",
-            "Thinking outside of the box is not welcome.\n",
-            "Think twice before you say anything.\n"
+            "No, no, NO.",
+            "I'm afraid you can't do that.",
+            "Please, just play along.",
+            "This is impossible.",
+            "Stubborn, aren't we?",
+            "This is not an option!",
+            "You are free to do whatever you want... within limits.",
+            "You can't ask for a miracle.",
+            "Thinking outside of the box is not welcome.",
+            "Think twice before you say anything."
         ],
         "Invalid Danger Command":
         [
-            "There is nowhere you can run.\n",
-            "Stand and die like a man.\n",
-            "You can't enjoy yourself while danger is nearby.\n",
-            "There is no turning back.\n",
-            "Remember, losing is fun.\n"
+            "There is nowhere you can run.",
+            "Stand and die like a man.",
+            "You can't enjoy yourself while danger is nearby.",
+            "There is no turning back.",
+            "Remember, losing is fun."
         ],
         "Max Stat":
         [
@@ -319,7 +349,15 @@
             "You have nothing with you.",
             "You feel really poor.",
             "The words of Matthew 5:3 echo inside your head.",
-            "You feel that your backpack is way too light."
+            "You feel that your backpack is way too light.",
+            "Your backpack is filled with emptiness."
+        ],
+        "Lock Key":
+        [
+            "It's not a very smart thing to do.",
+            "Let's not get rid of this, yet.",
+            "You think this item is of big importance.",
+            "You feel you will need this in future."
         ]
     }
 }
