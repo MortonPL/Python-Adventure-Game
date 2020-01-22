@@ -1,13 +1,13 @@
 '''
     THIS IS THE MAIN GAME FILE
-    LATEST UPDATE: 21/01/20
+    LATEST UPDATE: 22/01/20
     LATEST VERSION: GAME_C
-
 '''
 import os
 import sys
 import json
 import random
+# import subprocess
 
 
 class GameData:
@@ -240,10 +240,11 @@ class Game:
         """Updates "player" ``Screen`` informations about current time,
         statistics and carried items."""
         self.get_screen("player").screen_reset()
-        timer_str = f"You have {self.data.time_limit - self.data.time} turns."
-        self.get_screen("player").screen_add(self.show_player_stats())
+        timer_str = f"You have {self.data.time_limit - self.data.time}"
+        timer_str_2 = " turns left."
+        self.get_screen("player").screen_add(self.show_stats())
         self.get_screen("player").screen_add(self.show_player_items())
-        self.get_screen("player").screen_add(timer_str)
+        self.get_screen("player").screen_add(timer_str+timer_str_2)
 
 # Command Interpreter (CI) methods:
 
@@ -294,10 +295,12 @@ class Game:
             print("You have died and thus failed the mission. GAME OVER")
             self.data.fail = True
 
-    def timer_tick(self):
+    def timer_tick(self, reverse=False):
         """Decreases the time counter. Sets the fail flag to True and informs
         player about it."""
-        if self.data.time < self.data.time_limit:
+        if reverse:
+            self.data.time -= 1
+        elif self.data.time < self.data.time_limit:
             self.data.time += 1
         else:
             print("You have run out of time and "
@@ -463,7 +466,10 @@ class Game:
         self.deactivate_screen("menu")
         if state == "new":
             for location_id, location in self.data.location_types.items():
-                if "is_start" in location:
+                if "is_start" in location and location["is_start"]:
+                    self.take_it("PLANS")
+                    self.take_it("MONEY")
+                    self.take_it("MONEY")
                     return self.appear(location_id, "LD_START")
         elif state == "loaded":
             return self.appear(self.data.player["Location"], "LD_START")
@@ -490,7 +496,6 @@ class Game:
         less than 3 and gives search rewards if there are any."""
         location = self.clocation()[1]
         try:
-            # spend some time
             if "Search Level" not in location.keys():
                 location["Search Level"] = 3
             if "Search Rewards" not in location.keys()\
@@ -531,6 +536,9 @@ class Game:
         Changes player location to given location if it exists
         and there's a path to it."""
         found_it = False
+        if args == ():
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Invalid Command"))
         for location_id, location in self.data.location_types.items():
             if "Name" in location.keys():
                 if location["Name"].lower() == args[0]:
@@ -558,6 +566,9 @@ class Game:
 
         If answer is take: all;
         Picks up all existing items in the current location."""
+        if args == ():
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Invalid Command"))
         location = self.clocation()[1]
         if "List of Items" not in location.keys():
             return self.ci_invalid_input(
@@ -605,6 +616,9 @@ class Game:
         If answer is drop: all;
         Drops down all carried non-key items in the current location."""
         found_it = False
+        if args == ():
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Invalid Command"))
         if args[0] == "all":
             if sum(self.data.player["Items"].values()) == 0:
                 return self.ci_invalid_input(
@@ -645,6 +659,9 @@ class Game:
         If answer is use: all;
         Uses every possible non-key item."""
         found_it = False
+        if args == ():
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Invalid Command"))
         if args[0] == "all":
             if sum(self.data.player["Items"].values()) == 0:
                 return self.ci_invalid_input(
@@ -680,6 +697,22 @@ class Game:
 
     def examine(self, *args):
         """ TODO """
+        if args == ():
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Invalid Command"))
+        if self.get_item_from_name(args[0]) not in self.data.player["Items"]:
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Missing Item"))
+        for item_id in self.data.player["Items"]:
+            if self.get_item(item_id)["Name"].lower() == args[0]:
+                found_it = True
+                self.get_screen("command").screen_add(
+                    self.get_item(item_id)["Description"], True)
+                self.update_screens()
+        if not found_it:
+            return self.ci_invalid_input(
+                "GENERIC", self.random_text("Imaginary Item"))
+
         return self.ci_call_user("GENERIC")
 
     def do_event(self, *args):
@@ -688,6 +721,9 @@ class Game:
         Chooses one of the event options if the requirements are met."""
         location = self.clocation()[1]
         success = False
+        if len(args) <= 1:
+            return self.ci_invalid_input(
+                args[0], self.random_text("Invalid Command"))
         try:
             choice_index = int(args[1]) - 1
             if choice_index < 0 or\
@@ -695,7 +731,7 @@ class Game:
                 raise ValueError
         except (TypeError, ValueError):
             return self.ci_invalid_input(
-                args[1], self.random_text("Invalid Command"))
+                args[0], self.random_text("Invalid Command"))
 
         event = location["List of Events"][choice_index]
 
@@ -715,6 +751,10 @@ class Game:
             else:
                 return self.ci_invalid_input(
                     args[0], self.random_text("Low Stat"))
+        elif event["Type"] == "Timed":
+            for turn in range(event["Requirements"][0]):
+                self.timer_tick()
+            success = True
         if success:
             self.get_screen("command").screen_add(event["Thank Text"], True)
             self.give_rewards(event["Rewards"], source="event")
@@ -738,22 +778,36 @@ class Game:
                 return False
         return True
 
-    def show_player_stats(self):
-        """Returns a string containing information about player's statistics.
-        """
+    def show_stats(self, item_id=None):
+        """Returns a string containing information about player's statistics
+        or given item requirements."""
         player = self.data.player
-        stats_str = "You have "
-        i = 0
-        for stat, stat_name in self.data.dict_of_stats.items():
-            stat_value = player["Stats"][stat]
-            stat_max = player["Max Stats"][stat]
-            i += 1
-            if not i == len(player["Stats"]):
+        if item_id is None:
+            stats_str = "You have "
+            i = 0
+            for stat, stat_name in self.data.dict_of_stats.items():
+                stat_value = player["Stats"][stat]
+                stat_max = player["Max Stats"][stat]
+                i += 1
+                if not i == len(player["Stats"]):
+                    end = ", "
+                else:
+                    end = ". "
+                stats_str = "".join([stats_str, f"{stat_value}/{stat_max} ",
+                                    stat_name, end])
+        else:
+            stats_str = " You need "
+            item = self.get_item(item_id)
+            i = 0
+            for stat_name in self.data.dict_of_stats.values():
+                stat_value = item["Prerequisite"][i]
+                i += 1
                 end = ", "
-            else:
-                end = ". "
-            stats_str = "".join([stats_str, f"{stat_value}/{stat_max} ",
-                                stat_name, end])
+                if stat_value > 0:
+                    stats_str = "".join([stats_str, f"{stat_value} ",
+                                        stat_name, end])
+                if i == len(item["Prerequisite"]):
+                    stats_str = "".join([stats_str[:-2], "."])
         return stats_str
 
     def show_player_items(self):
@@ -865,7 +919,7 @@ class Game:
         if "List of Paths" not in location.keys():
             path_str = "MISSING PATHS ENTRY!"
         elif len(location["List of Paths"]) == 0:
-            path_str = self.random_text(["No Paths"])
+            path_str = self.random_text("No Paths")
         else:
             i = 0
             path_str = "There are paths to "
@@ -934,6 +988,11 @@ class Game:
                 self.get_screen("command").screen_add(
                     f"{reward_str}{self.get_item(reward)['Article']} "
                     f"{self.get_item(reward)['Name']}!", True)
+            elif type(reward) is int and reward > 0:
+                for turn in range(reward):
+                    self.timer_tick(reverse=True)
+                self.get_screen("command").screen_add(
+                    f"You gained {reward} more turns!", True)
 
     def clean_backpack(self):
         """Removes all items (keys) with the value of 0 from player's backpack.
@@ -966,6 +1025,8 @@ class Game:
 
         ``Key``-type items cannot be used or dropped.
 
+        ``Event``-type items cannot be used but can be dropped.
+
         ``StatUp`` action increases/decreases player statistics by
         certain value if the statistics are not at player's maximum.
 
@@ -977,7 +1038,7 @@ class Game:
         applied = False
         if item is None:
             item = self.get_item(item_id)
-        if self.check_item_prereq(item_id):
+        if item_id is None or self.check_item_prereq(item_id):
             if item["Type"] == "Consumable":
 
                 if item["Action"][0] == "StatUp":
@@ -1025,17 +1086,22 @@ class Game:
                     for stat, stat_value in item["Action"][1].items():
                         player["Max Stats"][stat] += stat_value
                         player["Stats"][stat] += stat_value
-                        if item_id is not None:
-                            self.consume_item(item_id)
+                    if item_id is not None:
+                        self.consume_item(item_id)
 
             if item["Type"][0] == "Key":
                 self.get_screen("command").screen_add(
                     self.random_text("Lock Key"))
+            if item["Type"][0] == "Event":
+                self.get_screen("command").screen_add(
+                    self.random_text("Not Consumable"))
 
         else:
             if not use_all:
+                str_1 = self.random_text("Low Stat")
+                str_2 = self.show_stats(item_id)
                 return self.ci_invalid_input(
-                    "GENERIC", self.random_text("Low Stat"))
+                    "GENERIC", str_1+str_2)
 
     def consume_item(self, item_id: str):
         """Called by ``use_it``, removes the item from player's backpack
@@ -1101,10 +1167,6 @@ class Game:
             else:
                 return False
         return True
-
-# Functions for examination:
-
-# TODO
 
 # Text randomness:
 
@@ -1215,9 +1277,11 @@ class Menu:
         self.game.get_screen("menu").screen_add(
             f"Turns left {self.data.time_limit - self.data.time}"
             f"/{self.data.time_limit}")
-        self.game.get_screen("menu").screen_add(self.game.show_player_stats())
+        self.game.get_screen("menu").screen_add(self.game.show_stats())
         self.game.get_screen("menu").screen_add(self.game.show_player_items())
 
+
+# subprocess.call('', shell=True)
 
 if __name__ == "__main__":
     game = Game(GameData())
