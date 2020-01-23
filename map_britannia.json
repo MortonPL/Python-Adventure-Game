@@ -3,6 +3,7 @@
     "Name": "Earthquake in Britannia - Chapter One",
 
     "Time Limit": 30,
+    "Maximum Search Level": 3,
 
     "List of Calls":
     {
@@ -113,9 +114,9 @@
             "Name": "Jason",
             "Menu Description": "\tJason, the Veteran\nGood Combat Ability, Fitness and Strength, bad Knowledge and Social Skills.\n",
             "Stats": {"HP": 150, "FIT": 6, "KLD": 3,
-                      "COM": 6, "SOC": 3, "LUC": 4, "GUN": 2},
+                      "COM": 6, "SOC": 3, "LUC": 4, "GUN": 0},
             "Max Stats": {"HP": 150, "FIT": 10, "KLD": 7,
-                          "COM": 10, "SOC": 7, "LUC": 7, "GUN": 2}
+                          "COM": 10, "SOC": 7, "LUC": 7, "GUN": 0}
         }
     },
 
@@ -126,23 +127,6 @@
             "Name": "Debug Start Location",
             "Comment": "DO NOT EDIT",
             "is_new": true
-        },
-        "L_TESTB":
-        {
-            "Name": "Test B",
-            "New Description": "You are in test location B for the first time..",
-            "Description": "You are in test location B.",
-            "Event Description": "You find a Bandit, waiting for prey.",
-            "Dangerous Event": true,
-            "List of Paths": ["L_TESTA"],
-            "Search Level": 0,
-            "Search Rewards": {},
-            "List of Items": [],
-            "List of Events": [
-                {"Type": "Check", "Requirements": [0, 5, 0, 0, 0, 0], "Rewards": [], "Text": "1. Try to outrun him. (Fitness >=5)\n", "Thank Text": "After a few minutes of running, the bandit gives up."},
-                {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0], "Rewards": [], "Text": "2. Fight him. (Combat Skill >=5)\n", "Thank Text": "You traded blows and emerged victorious."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Try to escape him.\n", "Thank Text": "You manage to escape, but with a few scratches."}
-            ]
         },
         "OXF_UNI1":
         {
@@ -161,13 +145,14 @@
             "New Description": "You enter the university hall. It is filled with young students and elder scientists.",
             "Description": "You enter the university hall. It is filled with young students and elder scientists.",
             "Event Description": "An old professor approaches you and asks what is your business here.",
+            "Dangerous Event": true,
             "List of Paths": ["OXF_UNI1"],
             "Search Level": 2,
             "Search Rewards": {"3": ["BLSTC"]},
             "List of Items": [],
             "List of Events": [
-                {"Type": "Check", "Requirements": [0, 0, 0, 0, 5, 0, 0], "Rewards": [5], "Text": "1. Explain your mission and ask for help. (Social Skill >=5)\n", "Thank Text": "The professor seems to believe you and gives you a map of local routes."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "2. Make up an excuse and leave.\n", "Thank Text": "The professor leaves you alone."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 5, 0, 0], "Rewards": [2], "Text": "1. Explain your mission and ask for help. (Social Skill >=5)\n", "Thank Text": "The professor seems to believe you and gives you a map of local routes."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"LUC": -1}], "Text": "2. Make up an excuse and leave.\n", "Thank Text": "The professor leaves you alone."},
                 {"Type": "Timed", "Requirements": [3], "Rewards": [{"KLD": 2}], "Text": "3. Tell him you're here for the lectures.", "Thank Text": "The professor drags you into the class. You lose some time sitting there, but you feel smarter now."}
                 ]
         },
@@ -178,8 +163,8 @@
             "Description": "You walk down the King Street, famous for its entertainment.",
             "Event Description": "You see a lively pub next to you.",
             "List of Paths": ["OXF_UNI1", "OXF_STR3"],
-            "Search Level": 3,
-            "Search Rewards": {},
+            "Search Level": 2,
+            "Search Rewards": {"3": ["FOOD"]},
             "List of Items": [],
             "List of Events": [
                 {"Type": "Timed", "Requirements": [1], "Rewards": [{"FIT": -1}], "Text": "1. Visit the pub.\n", "Thank Text": "You hoped you'd find some useful information there, but you only got a couple of beers. You don't feel so good."},
@@ -220,7 +205,7 @@
         },
         "OXF_GATE":
         {
-            "Name": "Town Gate",
+            "Name": "Oxford Town Gate",
             "New Description": "Finally, you approach the town gate. You can now depart on your adventure.",
             "Description": "You're back at the town gate.",
             "Event Description": "You visit the nearby stable. The owner says he can rent you a small horse.",
@@ -278,7 +263,7 @@
             "List of Items": [],
             "List of Events":[
                 {"Type": "Payment", "Requirements": ["FOOD"], "Rewards": [], "Text": "1. Eat something. (1* Food)\n", "Thank Text": "You satisfy your hunger for now."},
-                {"Type": "Timed", "Requirements": [1], "Rewards": [], "Text": "2. Spend some time looking around for anything edible.\n", "Thank Text": "You find some raw potatos lying around in the fields. Better than nothing."},
+                {"Type": "Timed", "Requirements": [2], "Rewards": [], "Text": "2. Spend some time looking around for anything edible.\n", "Thank Text": "You find some raw potatos lying around in the fields. Better than nothing."},
                 {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Try not to think about it.", "Thank Text": "You don't eat anything and feel a bit weaker."}
             ]
         },
@@ -289,15 +274,27 @@
             "Description": "You are on the way leading to Sheffield again.",
             "Event Description": "Suddenly, an Underman creature jumps from behind a hole nearby!",
             "Dangerous Event": true,
-            "List of Paths": ["RTE_PATH3", "RTE_PATH1"],
+            "List of Paths": ["RTE_PATH3", "RTE_PATH1", "SHF_GATE"],
             "Search Level": 0,
-            "Search Rewards": {"1": ["BNDG"], "2": ["AMMO"]},
+            "Search Rewards": {"1": ["BANDG"], "2": ["AMMO"]},
             "List of Items": [],
             "List of Events":[
                 {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 0, 2], "Rewards": [], "Text": "1. Shoot it with your gun!. (Gun >=2)\n", "Thank Text": "You hit the creature and it falls down the hole it came from. Terrifying."},
                 {"Type": "Check", "Requirements": [0, 0, 0, 7, 0, 0, 0], "Rewards": [], "Text": "2. Kill it with your own hands! (Combat Skill >=7)\n", "Thank Text": "You manage to throw the beast into the hole it came from. Thrilling."},
                 {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -40}], "Text": "3. Try to defend yourself.", "Thank Text": "After a long fight you manage to escape the creature, but you're badly injured."}
             ]
+        },
+        "SHF_GATE":
+        {
+            "Name": "Southern Sheffield Town Gate",
+            "New Description": "You are now on the outskirts of Sheffield. This is the end of this demo.",
+            "Description": "You are now on the outskirts of Sheffield.",
+            "List of Paths": ["RTE_PATH4"],
+            "Search Level": 3,
+            "Search Rewards": {},
+            "List of Items": [],
+            "List of Events":[],
+            "is_win": true
         }
     },
     "List of Items":
@@ -366,11 +363,11 @@
         {
             "Name": "Ammunition",
             "Article": "",
-            "Description": "Standard bullets",
+            "Description": "Standard bullets.",
             "Action Description": "You load the rounds into your gun.",
             "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["StatUp", {"GUN": 2}]
+            "Action": ["StatUp", {"GUN": 1}]
         },
         "MDBAG":
         {
@@ -430,7 +427,7 @@
             "Action Description": "You load and hold the rifle in your hands. Now you can shoot like a soldier you are.",
             "Prerequisite": [0, 4, 0, 5, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["Grow", {"GUN": 5}]
+            "Action": ["Grow", {"GUN": 2}]
         },
         "MATCH":
         {
