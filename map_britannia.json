@@ -84,7 +84,8 @@
         "KLD": "Knowledge",
         "COM": "Combat Skill",
         "SOC": "Social Skill",
-        "LUC": "Luck"
+        "LUC": "Luck",
+        "GUN": "Gun Power"
     },
 
     "Playable Characters":
@@ -94,27 +95,27 @@
             "Name": "Benjamin",
             "Menu Description": "\tBenjamin, the Hunter\nAll skills average, but better potential.\n",
             "Stats": {"HP": 100, "FIT": 5, "KLD": 5,
-                      "COM": 4, "SOC": 4, "LUC": 4},
+                      "COM": 4, "SOC": 4, "LUC": 4, "GUN": 0},
             "Max Stats": {"HP": 100, "FIT": 9, "KLD": 9,
-                          "COM": 9, "SOC": 9, "LUC": 9}
+                          "COM": 9, "SOC": 9, "LUC": 9, "GUN": 0}
         },
         "PKATH":
         {
             "Name": "Kathleen",
             "Menu Description": "\tKathleen, the Messenger\nGood Luck and Social Skills, bad Combat Ability and Strength.\n",
             "Stats": {"HP": 70, "FIT": 4, "KLD": 4,
-                      "COM": 2, "SOC": 6, "LUC": 6},
+                      "COM": 2, "SOC": 6, "LUC": 6, "GUN": 0},
             "Max Stats": {"HP": 70, "FIT": 7, "KLD": 10,
-                          "COM": 7, "SOC": 10, "LUC": 10}
+                          "COM": 7, "SOC": 10, "LUC": 10, "GUN": 0}
         },
         "PJASN":
         {
             "Name": "Jason",
             "Menu Description": "\tJason, the Veteran\nGood Combat Ability, Fitness and Strength, bad Knowledge and Social Skills.\n",
             "Stats": {"HP": 150, "FIT": 6, "KLD": 3,
-                      "COM": 6, "SOC": 3, "LUC": 4},
+                      "COM": 6, "SOC": 3, "LUC": 4, "GUN": 2},
             "Max Stats": {"HP": 150, "FIT": 10, "KLD": 7,
-                          "COM": 10, "SOC": 7, "LUC": 7}
+                          "COM": 10, "SOC": 7, "LUC": 7, "GUN": 2}
         }
     },
 
@@ -125,23 +126,6 @@
             "Name": "Debug Start Location",
             "Comment": "DO NOT EDIT",
             "is_new": true
-        },
-        "L_TESTA":
-        {
-            "Name": "Test A",
-            "New Description": "You are in test location A for the first time.",
-            "Description": "You are in test location A.",
-            "Event Description": "An old man asks you to help him with his injuries. What do you do?",
-            "List of Paths": ["L_TESTB"],
-            "Search Level": 0,
-            "Search Rewards": {"1": ["BANDG", "BANDG"], "2": ["LCKHS"], "3": ["LD_START"]},
-            "List of Items": ["BANDG", "BANDG", "BANDG", "LCKHS", "MDBAG"],
-            "List of Events": [
-                {"Type": "Payment", "Requirements": ["BANDG"], "Rewards": ["L_TESTC"], "Text": "1. Give him a Bandage.\n", "Thank Text": "The old man thanks you and shows you a new path."},
-                {"Type": "Check", "Requirements": [0, 0, 5, 0, 0, 0], "Rewards": ["L_TESTC", "LCKHS"], "Text": "2. Try to heal him. (Survival Skill >=5)\n", "Thank Text":"The old man feels relieved and not only he shows you the path, but also gives you an item."},
-                {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "4. Decline. You don't have time for old people.\n", "Thank Text": "The old man doesn't say anything."},
-                {"Type": "Timed", "Requirements": [2], "Rewards": ["BANDG"], "Text": "3. Try to heal him anyway.\n", "Thank Text": "The old man sats 'cool'."}
-            ]
         },
         "L_TESTB":
         {
@@ -159,16 +143,6 @@
                 {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0], "Rewards": [], "Text": "2. Fight him. (Combat Skill >=5)\n", "Thank Text": "You traded blows and emerged victorious."},
                 {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Try to escape him.\n", "Thank Text": "You manage to escape, but with a few scratches."}
             ]
-        },
-        "L_TESTC":
-        {
-            "Name": "Test C",
-            "New Description": "Wow, you're about to win the game!",
-            "Description": "Why are you here again?",
-            "List of Paths": ["L_TESTB", "L_TESTA"],
-            "Search Level": 3,
-            "List of Items": [],
-            "is_win": true
         },
         "OXF_UNI1":
         {
@@ -192,16 +166,16 @@
             "Search Rewards": {"3": ["BLSTC"]},
             "List of Items": [],
             "List of Events": [
-                {"Type": "Check", "Requirements": [0, 0, 0, 0, 5, 0], "Rewards": [5], "Text": "1. Explain your mission and ask for help. (Social Skill >=5)\n", "Thank Text": "The professor seems to believe you and gives you a map of local routes."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 5, 0, 0], "Rewards": [5], "Text": "1. Explain your mission and ask for help. (Social Skill >=5)\n", "Thank Text": "The professor seems to believe you and gives you a map of local routes."},
                 {"Type": "Choice", "Requirements": [], "Rewards": [], "Text": "2. Make up an excuse and leave.\n", "Thank Text": "The professor leaves you alone."},
                 {"Type": "Timed", "Requirements": [3], "Rewards": [{"KLD": 2}], "Text": "3. Tell him you're here for the lectures.", "Thank Text": "The professor drags you into the class. You lose some time sitting there, but you feel smarter now."}
                 ]
         },
         "OXF_STR1":
         {
-            "Name": "King's Street",
-            "New Description": "You walk down the King's Street, famous for its entertainment.",
-            "Description": "You walk down the King's Street, famous for its entertainment.",
+            "Name": "King Street",
+            "New Description": "You walk down the King Street, famous for its entertainment.",
+            "Description": "You walk down the King Street, famous for its entertainment.",
             "Event Description": "You see a lively pub next to you.",
             "List of Paths": ["OXF_UNI1", "OXF_STR3"],
             "Search Level": 3,
@@ -214,9 +188,9 @@
         },
         "OXF_STR2":
         {
-            "Name": "Queen's Street",
-            "New Description": "You walk down the Queen's Street.",
-            "Description": "You walk down the Queen's Street.",
+            "Name": "Queen Street",
+            "New Description": "You walk down the Queen Street.",
+            "Description": "You walk down the Queen Street.",
             "Event Description": "You can visit the local market here.",
             "List of Paths": ["OXF_UNI1", "OXF_STR3"],
             "Search Level": 1,
@@ -225,7 +199,7 @@
             "List of Events":[
                 {"Type": "Payment", "Requirements": ["MONEY"], "Rewards": ["HERB"], "Text": "1. Buy some herbs from an old woman. (1* Money)\n", "Thank Text": "You buy medical herbs from an old granny."},
                 {"Type": "Payment", "Requirements": ["MONEY"], "Rewards": ["MATCH", {"LUC": 1}], "Text": "2. Buy some basic supplies from a poor girl. (1* Money)\n", "Thank Text": "The tiny, wounded girl is very happy to sell you a pack of matches.\nThey were expensive, but you think you've done a good deed."},
-                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5], "Rewards": ["MONEY"], "Text": "3. Try to steal some money. (Luck >= 5)", "Thank Text": "You get some quick cash and get out."}
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5, 0], "Rewards": ["MONEY"], "Text": "3. Try to steal some money. (Luck >= 5)", "Thank Text": "You get some quick cash and get out."}
                 ]
         },
         "OXF_STR3":
@@ -240,8 +214,8 @@
             "List of Items": [],
             "List of Events":[
                 {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "1. Say that you want to enter the garden.\n", "Thank Text": "After a few minutes of trying to convince the guards, they loose patience and kick you out."},
-                {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0], "Rewards": ["GAPPLE"], "Text": "2. Say that you're here for the thing. (Social Skill >= 5)\n", "Thank Text": "The guards let you through and give you a package. You decide to keep playing along."},
-                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5], "Rewards": [{"LUC": -1}], "Text": "3. Try to disctract the guards. (Luck >= 5)", "Thank Text": "You silently collapse a tower made of barrels and manage to slip past the guards.\nUnfortunately you don't find anything useful. You just wasted your luck."}
+                {"Type": "Check", "Requirements": [0, 0, 0, 5, 0, 0, 0], "Rewards": ["GAPPLE"], "Text": "2. Say that you're here for the thing. (Social Skill >= 5)\n", "Thank Text": "The guards let you through and give you a package. You decide to keep playing along."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 5, 0], "Rewards": [{"LUC": -1}], "Text": "3. Try to disctract the guards. (Luck >= 5)", "Thank Text": "You silently collapse a tower made of barrels and manage to slip past the guards.\nUnfortunately you don't find anything useful. You just wasted your luck."}
             ]
         },
         "OXF_GATE":
@@ -252,17 +226,78 @@
             "Event Description": "You visit the nearby stable. The owner says he can rent you a small horse.",
             "List of Paths": ["OXF_STR3", "RTE_PATH1"],
             "Search Level": 1,
-            "Search Rewards": {"2": "LCKHS"},
+            "Search Rewards": {"2": ["LCKHS"]},
             "List of Items": [],
             "List of Events":[
-                {"Type": "Payment", "Requirements": ["MOENY", "MONEY"], "Rewards": [3], "Text": "1. Rent a horse from the stable. (2* Money)\n", "Thank Text": "You pay the price and get a brown horse. With a mount, you have more time to spare."},
-                {"Type": "Check", "Requirements": [0, 6, 0, 0, 0, 0], "Rewards": [5], "Text": "2. Impress the owner with your equestrian skills. (Fitness >= 5)", "Thank Text": "The owner is in awe of your horse riding and rents you a white horse. Now you have more time to spare."}            ]
+                {"Type": "Payment", "Requirements": ["MONEY", "MONEY"], "Rewards": [3], "Text": "1. Rent a horse from the stable. (2* Money)\n", "Thank Text": "You pay the price and get a brown horse. With a mount, you have more time to spare."},
+                {"Type": "Check", "Requirements": [0, 6, 0, 0, 0, 0, 0], "Rewards": [5], "Text": "2. Impress the owner with your equestrian skills. (Fitness >= 5)", "Thank Text": "The owner is in awe of your horse riding and rents you a white horse. Now you have more time to spare."}            ]
         },
         "RTE_PATH1":
         {
             "Name": "Route to North",
-            "New Description": "This is the end of this demo!",
-            "is_win": true
+            "New Description": "You leave the city of Oxford and find yourself on a wide road.\nYou find a military blockade at the crossroad.",
+            "Description": "You are on a wide road near Oxford. There is a military blockade at the crossroad.",
+            "Event Description": "The guarding soldier with a fresh cigarette in his mouth halts you and says the shorter path up north is closed\nand that you have to take the longer way around.",
+            "List of Paths": ["OXF_GATE", "RTE_PATH2"],
+            "Search Level": 0,
+            "Search Rewards": {"3": ["AMMO", "AMMMO"]},
+            "List of Items": ["LNFLD"],
+            "List of Events":[
+                {"Type": "Payment", "Requirements": ["MONEY", "MONEY"], "Rewards": ["RTE_PATH4"], "Text": "1. Bribe the soldier. (2* Money)\n", "Thank Text": "The soldier relucantly takes the money and lets you through."},
+                {"Type": "Payment", "Requirements": ["MATCH"], "Rewards": ["RTE_PATH4"], "Text": "2. Light his cigarette. (Matches)\n", "Thank Text": "The soldier shpws graditude by grunting and letting you through."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 7, 0, 0, 0], "Rewards": ["RTE_PATH4"], "Text": "3. Kill the soldier. (Comabt Skill >= 7)", "Thank Text": "You manage to overcome the soldier and kill him before he calls for help.\nYou wonder if it was the right thing to do."}
+            ]
+        },
+        "RTE_PATH2":
+        {
+            "Name": "The Long Way North",
+            "New Description": "You follow the long way north. You leave Oxford behind.",
+            "Description": "You are on the long way north again. You can see Oxford in the distance.",
+            "Event Description": "Suddenly, you encounter a pair of bandits! They want your money, and you don't have enough time to draw your gun.",
+            "Dangerous Event": true,
+            "List of Paths": ["RTE_PATH1", "RTE_PATH3"],
+            "Search Level": 3,
+            "Search Rewards": {},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Payment", "Requirements": ["MONEY"], "Rewards": [{"HP": -20}], "Text": "1. Give them some money. (1* Money)\n", "Thank Text": "The bandits grab your money, punch you a few times and leave."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 7, 0, 0, 0], "Rewards": ["RTE_PATH3"], "Text": "2. Beat them up. (Comabt Skill >= 7)\n", "Thank Text": "You knock out one of them. The other runs away. You are safe."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -40}], "Text": "3. Refuse.\n", "Thank Text": "The bandits are outraged and attack you. They leave you injured after a few minutes of fighting."}
+            ]
+        },
+        "RTE_PATH3":
+        {
+            "Name": "Further Long Way North",
+            "New Description": "You keep going the long way north. There are plains all around you.",
+            "Description": "You are on the long way north again. You can't see even the highest buildings in Oxford.",
+            "Event Description": "You feel hungry.",
+            "Dangerous Event": true,
+            "List of Paths": ["RTE_PATH2", "RTE_PATH4"],
+            "Search Level": 1,
+            "Search Rewards": {"3": ["FOOD"]},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Payment", "Requirements": ["FOOD"], "Rewards": [], "Text": "1. Eat something. (1* Food)\n", "Thank Text": "You satisfy your hunger for now."},
+                {"Type": "Timed", "Requirements": [1], "Rewards": [], "Text": "2. Spend some time looking around for anything edible.\n", "Thank Text": "You find some raw potatos lying around in the fields. Better than nothing."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -15}], "Text": "3. Try not to think about it.", "Thank Text": "You don't eat anything and feel a bit weaker."}
+            ]
+        },
+        "RTE_PATH4":
+        {
+            "Name": "Way to Sheffield",
+            "New Description": "You keep going north and see the outskirts of Sheffield as you come closer.\nYou stumble upon a soldier corpse. What happened?",
+            "Description": "You are on the way leading to Sheffield again.",
+            "Event Description": "Suddenly, an Underman creature jumps from behind a hole nearby!",
+            "Dangerous Event": true,
+            "List of Paths": ["RTE_PATH3", "RTE_PATH1"],
+            "Search Level": 0,
+            "Search Rewards": {"1": ["BNDG"], "2": ["AMMO"]},
+            "List of Items": [],
+            "List of Events":[
+                {"Type": "Check", "Requirements": [0, 0, 0, 0, 0, 0, 2], "Rewards": [], "Text": "1. Shoot it with your gun!. (Gun >=2)\n", "Thank Text": "You hit the creature and it falls down the hole it came from. Terrifying."},
+                {"Type": "Check", "Requirements": [0, 0, 0, 7, 0, 0, 0], "Rewards": [], "Text": "2. Kill it with your own hands! (Combat Skill >=7)\n", "Thank Text": "You manage to throw the beast into the hole it came from. Thrilling."},
+                {"Type": "Choice", "Requirements": [], "Rewards": [{"HP": -40}], "Text": "3. Try to defend yourself.", "Thank Text": "After a long fight you manage to escape the creature, but you're badly injured."}
+            ]
         }
     },
     "List of Items":
@@ -273,7 +308,7 @@
             "Article": "",
             "Description": "Several pages filled with theoretical and technical details.\nYour head hurts just by looking at it.",
             "Action Description": "",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Key",
             "Action": []
         },
@@ -283,7 +318,7 @@
             "Article": "",
             "Description": "Money, so they say is the root of all evil today.",
             "Action Description": "",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Key",
             "Action": []
         },
@@ -293,7 +328,7 @@
             "Article": "a",
             "Description": "A fiber bandage for treatment of small wounds.",
             "Action Description": "You stop bleeding and feel a bit better.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"HP": 15}]
         },
@@ -303,7 +338,7 @@
             "Article": "",
             "Description": "A pack of medical herbs. They look healthy.",
             "Action Description": "You feel a little stronger now.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"HP": 20, "FIT": 1}]
         },
@@ -311,9 +346,9 @@
         {
             "Name": "Knife",
             "Article": "a",
-            "Description": "A simple, 6 inch blade. Can open letters and stomaches alike.",
-            "Action Description": "It's always good to have a back-up weapon during combat",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Description": "A simple, 6 inch blade. Never loses reception.",
+            "Action Description": "It's always good to have a back-up weapon during combat.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"COM": 1}]
         },
@@ -323,9 +358,19 @@
             "Article": "a",
             "Description": "A horseshoe that is said to bring luck to the wearer.",
             "Action Description": "You feel this symbol brings you good fortune.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["StatUp", {"LUC": 1}]
+        },
+        "AMMO":
+        {
+            "Name": "Ammunition",
+            "Article": "",
+            "Description": "Standard bullets",
+            "Action Description": "You load the rounds into your gun.",
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["StatUp", {"GUN": 2}]
         },
         "MDBAG":
         {
@@ -333,7 +378,7 @@
             "Article": "a",
             "Description": "A bag filled with modern medicine.",
             "Action Description": "You heal your injuries completely.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["Restore", ["HP"]]
         },
@@ -343,7 +388,7 @@
             "Article": "a",
             "Description": "A trusty helmet that gives a little bit of protection.",
             "Action Description": "You are no longer afraid about your head.",
-            "Prerequisite": [0, 4, 0, 0, 0, 0],
+            "Prerequisite": [0, 4, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["Grow", {"HP": 10}]
         },
@@ -353,7 +398,7 @@
             "Article": "a",
             "Description": "A heavy uniform designed to give wearer signigicant protection.",
             "Action Description": "You think that will help you survive a bit longer.",
-            "Prerequisite": [0, 6, 0, 0, 0, 0],
+            "Prerequisite": [0, 6, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["Grow", {"HP": 40}]
         },
@@ -363,9 +408,9 @@
             "Article": "a",
             "Description": "The book is called 'Balistics for Conscripts' - A timeless classic written by A. Romanov.",
             "Action Description": "Fascinating subject - things go up, things go down!",
-            "Prerequisite": [0, 0, 5, 0, 0, 0],
+            "Prerequisite": [0, 0, 5, 0, 0, 0, 0],
             "Type": "Consumable",
-            "Action": ["Grow", {"KLD": 1, "COM": 1}]
+            "Action": ["Grow", {"KLD": 1}]
         },
         "GAPPLE":
         {
@@ -373,9 +418,19 @@
             "Article": "a",
             "Description": "The legendary fruit, now in your hands. Eating it must be a good idea.",
             "Action Description": "It tastes so good you feel it's a sin to eat it.",
-            "Prerequisite": [0, 0, 0, 0, 0, 0],
+            "Prerequisite": [0, 0, 0, 0, 0, 0, 0],
             "Type": "Consumable",
             "Action": ["Grow", {"HP": 15, "FIT": 1, "KLD": 1, "SOC": 1, "COM": 1, "LUC": 2}]
+        },
+        "LNFLD":
+        {
+            "Name": "Lee Enfield Rifle",
+            "Article": "a",
+            "Description": "Short, Magazine, Lee-Enfield Mk I. The most famous gun in Britain.",
+            "Action Description": "You load and hold the rifle in your hands. Now you can shoot like a soldier you are.",
+            "Prerequisite": [0, 4, 0, 5, 0, 0, 0],
+            "Type": "Consumable",
+            "Action": ["Grow", {"GUN": 5}]
         },
         "MATCH":
         {

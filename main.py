@@ -292,19 +292,22 @@ class Game:
         """Sets the fail flag to True if player's HP is below or equal to 0 and informs
         player about it."""
         if self.data.player["Stats"]["HP"] <= 0:
-            print("You have died and thus failed the mission. GAME OVER")
+            self.get_screen("command").screen_add(
+                "You have died and thus failed the mission. GAME OVER", True)
+            self.refresh_screens()
             self.data.fail = True
 
     def timer_tick(self, reverse=False):
-        """Decreases the time counter. Sets the fail flag to True and informs
-        player about it."""
+        """Decreases the time counter. If counter is 0, sets the fail flag
+        to True and informs player about it."""
         if reverse:
             self.data.time -= 1
         elif self.data.time < self.data.time_limit:
             self.data.time += 1
         else:
-            print("You have run out of time and "
-                  "thus failed the mission. GAME OVER")
+            self.get_screen("command").screen_add(
+                "You have run out of time and "
+                "thus failed the mission. GAME OVER", True)
             self.data.fail = True
 
     def ci_invalid_input(self, call: str,
@@ -348,6 +351,7 @@ class Game:
         again."""
         self.check_health()
         if self.data.fail and not self.data.already_failed:
+            input()
             return self.menu_end_game("FAILURE")
 
         if loaded_call is None:
@@ -741,6 +745,7 @@ class Game:
                 for item in event["Requirements"]:
                     self.drop_it(item, drop_all=True, destroy=True)
                     success = True
+                    self.clean_backpack()
             else:
                 return self.ci_invalid_input(
                     args[0], "You don't have enough items!")
