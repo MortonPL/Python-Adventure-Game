@@ -1,6 +1,6 @@
 '''
     THIS IS THE MAIN GAME FILE
-    LATEST UPDATE: 22/01/20
+    LATEST UPDATE: 23/01/20
     LATEST VERSION: GAME_C
 '''
 import os
@@ -52,6 +52,7 @@ class GameData:
         self.mapfile = None
         self.time = 0
         self.time_limit = 0
+        self.max_search = 0
         self.fail = False
         self.already_failed = False
 
@@ -125,6 +126,12 @@ class ReaderJSON:
 
 
 class Game:
+    """This class contains almost all game functions: the command interpreter,
+    menu state handler, screen handler, all gameplay options, saving/loading.
+
+    Variables:
+
+    ``data_object`` (GameData): Game "memory" object."""
 
     def __init__(self, data_object: GameData):
         self.data = data_object
@@ -144,6 +151,7 @@ class Game:
             self.data.dict_of_stats = json["Player Stats"]
             self.data.mapfile = json["Name"]
             self.data.time_limit = json["Time Limit"]
+            self.data.max_search = json["Maximum Search Level"]
         else:
             self.data.player = json["Player"]
             self.data.time = json["Time"]
@@ -502,7 +510,7 @@ class Game:
         location = self.clocation()[1]
         try:
             if "Search Level" not in location.keys():
-                location["Search Level"] = 3
+                location["Search Level"] = self.data.max_search
             if "Search Rewards" not in location.keys()\
                     or type(location["Search Rewards"]) is not dict:
                 location["Search Rewards"] = {"1": [], "2": [], "3": []}
@@ -510,7 +518,7 @@ class Game:
                 if level not in location["Search Rewards"].keys()\
                         or type(location["Search Rewards"][level]) is not list:
                     location["Search Rewards"][level] = []
-            if location["Search Level"] < 3:
+            if location["Search Level"] < self.data.max_search:
                 location["Search Level"] += 1
                 if location["Search Rewards"][
                         str(location["Search Level"])] != []:
@@ -764,8 +772,8 @@ class Game:
         if success:
             self.get_screen("command").screen_add(event["Thank Text"], True)
             self.give_rewards(event["Rewards"], source="event")
-            location.pop("List of Events")
-            location.pop("Event Description")
+            location.pop("List of Events", None)
+            location.pop("Event Description", None)
             location.pop("Dangerous Event", None)
         self.update_screens()
         return self.ci_call_user("GENERIC")
@@ -1182,8 +1190,14 @@ class Game:
 
 
 class Menu:
+    """A class representing menu state. Each menu has a ``call_key``
+    to the corresponding call. Depending on the ``call_key``, menu
+    can also use a specific hardcoded function.
 
-    def __init__(self, game, call_key):
+    Example: Menu with ``call_key`` "MENU_SCENARIO" shows all valid mapfiles
+    and adds them as "MENU_SCENARIO" call answers."""
+
+    def __init__(self, game: Game, call_key: str):
         self.game = game
         self.data = self.game.data
         self.call_key = call_key
@@ -1196,7 +1210,8 @@ class Menu:
         self.read_menu()
 
     def read_menu(self):
-        """Gets text to show from the corresponding call type."""
+        """Gets text to show from the corresponding call type.
+        Calls a hardcoded function bound to the ``self.call_key``."""
         self.game.get_screen("menu").screen_reset()
         call = self.game.ci_call_check(self.call_key)
 
@@ -1286,8 +1301,6 @@ class Menu:
         self.game.get_screen("menu").screen_add(self.game.show_stats())
         self.game.get_screen("menu").screen_add(self.game.show_player_items())
 
-
-# subprocess.call('', shell=True)
 
 if __name__ == "__main__":
     game = Game(GameData())
