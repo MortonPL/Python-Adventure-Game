@@ -8,6 +8,7 @@ def create_new_enviroment(game: Game, character: str):
     """Directly feeds data into the game in order to skip all menus."""
     game.parse_from_json(ReaderJSON("map_britannia.json").json_file,
                          overlap=False)
+    game.data.testing = True
     if character != "PFAKE":
         for entry in game.data.character_types[character]:
             game.data.player[entry] = game.data.character_types[
@@ -57,10 +58,10 @@ def simulate_ci_call(game: Game, raw_command: str, call_key=None,
                      loaded_call=None):
     if loaded_call is None:
         return game.ci_call_user(
-            call=call_key, answer=raw_command, testing=True)
+            call=call_key, answer=raw_command)
     else:
         return game.ci_call_user(
-            loaded_call=loaded_call, answer=raw_command, testing=True)
+            loaded_call=loaded_call, answer=raw_command)
 
 
 def test_take_item():
