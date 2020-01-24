@@ -319,12 +319,16 @@ class Game:
             self.data.fail = True
 
     def ci_invalid_input(self, call: str,
-                         string="Please choose a valid option."):
+                         string="Please choose a valid option.",
+                         testing=False):
         """Informs player that given input is invalid and repeats the
         ``call``."""
-        self.get_screen("command").screen_add(string, True, True)
-        self.refresh_screens()
-        return self.ci_call_user(call)
+        if not testing:
+            self.get_screen("command").screen_add(string, True, True)
+            self.refresh_screens()
+            return self.ci_call_user(call)
+        else:
+            return False
 
     def ci_question(self, question=""):
         """Asks for player input while showing ``question``. Returns a tuple
@@ -349,14 +353,21 @@ class Game:
             input(f"Call {call} seems to be corrupted. Press enter to quit.")
             sys.exit()
 
-    def ci_call_user(self, call: str, loaded_call=None):
+    def ci_call_user(self, call=None, loaded_call=None, answer=None,
+                     testing=False):
         """This is the main function that interprets player input.
         First, it checks if the failure condition is met and ends the game if
         it's true. Then it looks up for a call to execute with the ``call``
         key and asks for player input. If player's answer is defined in the
         call dictionary, returns the corresponding function with its arguments
         to the main loop. Otherwise informs the player and asks for input
-        again."""
+        again.
+
+        ``loaded_call``, not-None ``answer`` and ``testing`` are used in unit
+        tests. ``loaded_call`` overrides the loading of the call from data
+        based on the ``call`` key. ``answer`` overrides the player input.
+        ``testing`` forces the function to return Game.ci_invalid_input itself
+        instead of calling it - this is used in result assertion."""
         self.check_health()
         if self.data.fail and not self.data.already_failed:
             input()
@@ -365,7 +376,10 @@ class Game:
         if loaded_call is None:
             loaded_call = self.ci_call_check(call)
         try:
-            answer = self.ci_question(loaded_call["question"])
+            if answer is None:
+                answer = self.ci_question(loaded_call["question"])
+            else:
+                answer = answer.lower().split(": ")
         except Exception:
             return self.data.rollback(*self.data.rollback_args)
         valid_answer = False
@@ -407,6 +421,8 @@ class Game:
             elif call == "GENERIC":
                 return self.ci_invalid_input(
                     call, self.random_text("Invalid Command"))
+            elif testing:
+                return self.ci_invalid_input, ()
             else:
                 return self.ci_invalid_input(
                     call, self.random_text("Invalid Command"))
@@ -570,7 +586,7 @@ class Game:
             return self.ci_invalid_input(
                 "GENERIC", self.random_text("Imaginary Path"))
 
-    def take_item(self, *args):
+    def take_item(self, testing=False, *args):
         """GENERIC GAMEPLAY FUNCTION
 
         If answer is take: item;
@@ -581,16 +597,19 @@ class Game:
         Picks up all existing items in the current location."""
         if args == ():
             return self.ci_invalid_input(
-                "GENERIC", self.random_text("Invalid Command"))
+                "GENERIC", self.random_text("Invalid Command"),
+                testing=testing)
         location = self.clocation()[1]
         if "List of Items" not in location.keys():
             return self.ci_invalid_input(
-                "GENERIC", "There is nothing to take.")
+                "GENERIC", "There is nothing to take.",
+                testing=testing)
         found_it = False
         if args[0] == "all":
             if len(location["List of Items"]) == 0:
                 return self.ci_invalid_input(
-                    "GENERIC", "There is nothing to take.")
+                    "GENERIC", "There is nothing to take.",
+                    testing=testing)
             found_it = True
             for item_id in location["List of Items"]:
                 self.take_it(item_id)
@@ -603,7 +622,8 @@ class Game:
                 if self.get_item(item_id)["Name"].lower() == args[0]:
                     if item_id not in location["List of Items"]:
                         return self.ci_invalid_input(
-                            "GENERIC", "There is nothing like that here.")
+                            "GENERIC", "There is nothing like that here.",
+                            testing=testing)
                     else:
                         found_it = True
                         self.take_it(item_id)
@@ -611,12 +631,15 @@ class Game:
                         self.get_screen("command").screen_add(
                             f"You took {self.get_item(item_id)['Name']}.",
                             True)
-                        self.update_screens()
+                        if not testing:
+                            self.update_screens()
                         break
         if not found_it:
             return self.ci_invalid_input(
-                "GENERIC", self.random_text("Imaginary Item"))
-        return self.ci_call_user("GENERIC")
+                "GENERIC", self.random_text("Imaginary Item"),
+                testing=testing)
+        if not testing:
+            return self.ci_call_user("GENERIC")
 
     def drop_item(self, *args):
         """GENERIC GAMEPLAY FUNCTION
